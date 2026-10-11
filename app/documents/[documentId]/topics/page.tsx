@@ -41,13 +41,11 @@ function Topic({
     index,
     isLast,
     documentId,
-    onGenerate
 }: {
     topic: TopicData,
     index: number,
     isLast: boolean,
     documentId: string,
-    onGenerate: () => void
 }) {
     const currentX = positions[index % positions.length]
     const nextX = positions[(index + 1) % positions.length]
@@ -104,9 +102,10 @@ function Topic({
                             Generating...
                         </span>
                     ) : (
-                        <button onClick={onGenerate} className="btn btn-primary h-8 px-4 text-xs">
-                            {topic.content_status == "failed" ? "Try again" : "Generate"}
-                        </button>
+                        <span className="flex items-center gap-2 text-accent text-xs font-bold">
+                            <span className="w-4 h-4 border-2 border-border border-t-primary rounded-full animate-spin" />
+                            ...
+                        </span>
                     )}
                 </div>
             ) : (
@@ -230,7 +229,6 @@ export default function Home() {
                                 index={index}
                                 isLast={index==document.topics.length-1}
                                 documentId={documentId}
-                                onGenerate={() => generateTopic(topic.id)}
                             />
                         ))}
                     </div>

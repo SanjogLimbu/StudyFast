@@ -91,19 +91,22 @@ export default function Lesson({
     onNext: () => void
 }) {
     return (
-        <div className="flex flex-col gap-6 items-center w-full">
-            <div className="card w-full flex flex-col gap-4 p-8">
-                <div className="lesson">
-                    <Markdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[rehypeRuby, rehypeKatex]}
-                    >
-                        {lesson}
-                    </Markdown>
+        <div className="flex flex-col gap-6 items-center w-full min-h-0">
+            {/* The card clips the scrollbar of the div inside it, which keeps its corners rounded. */}
+            <div className="card w-full flex flex-col overflow-hidden">
+                <div className="p-8 overflow-y-auto">
+                    <div className="lesson">
+                        <Markdown
+                            remarkPlugins={[remarkMath]}
+                            rehypePlugins={[rehypeRuby, rehypeKatex]}
+                        >
+                            {lesson}
+                        </Markdown>
+                    </div>
                 </div>
             </div>
 
-            <button className="btn btn-primary w-48" onClick={onNext}>
+            <button className="btn btn-primary w-48 shrink-0" onClick={onNext}>
                 Next
             </button>
         </div>

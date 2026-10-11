@@ -376,7 +376,8 @@ export default function Topic() {
     return (
         <>
             <div className="bg-black/80">
-                <div className="min-h-screen flex flex-col items-center px-4 pt-6 pb-10">
+                {/* A lesson is held to the window height, so a long one scrolls inside its card instead of scrolling the page. */}
+                <div className={`${lesson?.lesson ? "h-dvh" : "min-h-screen pb-10"} flex flex-col items-center px-4 pt-6`}>
                     {/* Break time has its own progress bar and back button, unless the lesson is covering it. */}
                     {(!breakData || lesson?.lesson) && (
                         <div className="w-full max-w-2xl flex items-center gap-4 h-10">
@@ -395,7 +396,7 @@ export default function Topic() {
                     )}
 
 
-                    <div className="flex-1 w-full max-w-2xl flex flex-col items-center justify-center py-8">
+                    <div className="flex-1 min-h-0 w-full max-w-2xl flex flex-col items-center justify-center py-8">
                         {lesson?.lesson ? (
                             <Lesson
                                 lesson={lesson.lesson}

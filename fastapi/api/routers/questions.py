@@ -2,16 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
-
 from datetime import datetime, timezone, timedelta, date
-
-import random
 
 from database import get_db
 from models import User, Topic, Question, Document, TopicMastery, QuestionSession, StudyDay
 from schemas import UserAnswer
 from routers.auth import get_current_user
 from services.mastery import update_mastery
+from routers.documents import generate_topic_content
+
+import random
 
 ##
 
@@ -266,12 +266,13 @@ def answer_question(
     finished = session.current_question_index >= len(question_ids)
     correct = user_answer.user_answer == question.answer
 
+
     # Each question is worth its share of the topic, so answering every question correctly once fills the quiz half of mastery.
-    step = 100 / db.scalar(
+    step = 100 / db.scalars(
         select(func.count())
         .select_from(Question)
         .where(Question.topic_id == topic_id)
-    )
+    ).one()
 
     if (correct):
         topic_mastery.quiz_mastery = min(
@@ -315,6 +316,11 @@ def answer_question(
 
         if (next_topic_mastery and next_topic_mastery.status != "unlocked"):
             next_topic_mastery.status = "unlocked"
+            next_topic = next_topic_mastery.topic
+
+            # Topics made before content was generated per topic already have theirs.
+            if (next_topic.content_status == "empty"):
+                generate_topic_content(next_topic.document_id, next_topic.id, current_user, db)
 
 
     db.commit()

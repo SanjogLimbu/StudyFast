@@ -1,8 +1,11 @@
-from rq import get_current_job
+from rq import Retry, get_current_job
 
 from database import SessionLocal
+from job_queue import document_queue
 from models import Document, Topic, Flashcard, Question, TopicMastery
 from services import document_processing
+from sqlalchemy import and_, func, select
+from sqlalchemy.orm import Session, selectinload
 
 ##
 
@@ -85,10 +88,28 @@ def process_document(document_id: int):
             document.title = ai_response["title"]
 
 
-        # Commit all generated study material together. 
+        # Commit all generated study material together.
         # If construction fails before this commit, no partially generated material is saved.
         # Status will also become "pending" so that processing can try again.
         db.commit()
+
+        # Document processing was succesful so now we need to generate content for the 1st topic.
+        # Queued after the commit so process_topic can find the topic.
+        if (document.topics):
+            first_topic = document.topics[0]
+            first_topic.content_status = "pending"
+            db.commit()
+
+            document_queue.enqueue(
+                process_topic,
+                first_topic.id,
+                job_timeout=300,
+                retry=Retry(
+                    max=3,
+                    interval=[10, 30, 60]
+                )
+            )
+
 
     except Exception:
         db.rollback()
@@ -146,7 +167,10 @@ def process_topic(topic_id: int):
 
 
         outline = "\n".join(lines)
-        content = document_processing.generate_topic(topic.material, topic.name, outline, topic.document.source)
+
+        # Topics made before material was stored have none, so they use the whole document.
+        material = topic.material or topic.document.text
+        content = document_processing.generate_topic(material, topic.name, outline, topic.document.source)
         add_topic_content(topic, content)
 
         topic.content_status = "ready"
@@ -161,9 +185,17 @@ def process_topic(topic_id: int):
         )
 
 
-        # Not retried automatically, so the user can press generate again instead of waiting on a stuck topic.
+        job = get_current_job()
+
+
         if (topic is not None):
-            topic.content_status = "failed"
+            if (job is not None and job.should_retry):
+                topic.content_status = "pending"
+
+            else:
+                topic.content_status = "failed"
+
+                
             db.commit()
 
 

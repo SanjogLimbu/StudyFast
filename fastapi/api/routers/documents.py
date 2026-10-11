@@ -81,6 +81,72 @@ def get_topics_and_document_mastery(current_user, document):
     return topics, document_mastery
     
 
+def generate_topic_content(
+    document_id: int,
+    topic_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Lock the topic so a double click can't queue its generation twice.
+    query = (
+        select(Topic)
+        .join(Document)
+        .where(
+            Topic.id == topic_id,
+            Topic.document_id == document_id,
+            Document.user_id == current_user.id
+        )
+        .with_for_update(of=Topic)
+    )
+
+    topic = db.scalar(query)
+
+    if (topic is None):
+        raise HTTPException(
+            status_code=404,
+            detail="Topic not found."
+        )
+
+
+    mastery_record = db.scalar(
+        select(TopicMastery)
+        .where(
+            TopicMastery.topic_id == topic.id,
+            TopicMastery.user_id == current_user.id
+        )
+    )
+
+
+    # Locked topics can't be generated so AI budget is only spent on topics the user has reached.
+    if (mastery_record is None or mastery_record.status == "locked"):
+        raise HTTPException(
+            status_code=403,
+            detail="Topic is locked."
+        )
+
+
+    if (topic.content_status not in ["empty", "failed"]):
+        raise HTTPException(
+            status_code=409,
+            detail="Topic is already generated."
+        )
+
+
+    # User should see that their request actually went through and is processing.
+    topic.content_status = "pending"
+    db.commit()
+
+    document_queue.enqueue(
+        process_topic,
+        topic.id,
+        job_timeout=300,
+        retry=Retry(
+            max=3,
+            interval=[10, 30, 60]
+        )
+    )
+
+
 ##
 
 @router.post(
@@ -403,72 +469,6 @@ def get_lesson(
         "name": topic.name,
         "lesson": topic.lesson
     }
-
-
-@router.post(
-    "/{document_id}/topics/{topic_id}/generate",
-    status_code=status.HTTP_202_ACCEPTED
-)
-def generate_topic_content(
-    document_id: int,
-    topic_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    # Lock the topic so a double click can't queue its generation twice.
-    query = (
-        select(Topic)
-        .join(Document)
-        .where(
-            Topic.id == topic_id,
-            Topic.document_id == document_id,
-            Document.user_id == current_user.id
-        )
-        .with_for_update(of=Topic)
-    )
-
-    topic = db.scalar(query)
-
-    if (topic is None):
-        raise HTTPException(
-            status_code=404,
-            detail="Topic not found."
-        )
-
-
-    mastery_record = db.scalar(
-        select(TopicMastery)
-        .where(
-            TopicMastery.topic_id == topic.id,
-            TopicMastery.user_id == current_user.id
-        )
-    )
-
-
-    # Locked topics can't be generated so AI budget is only spent on topics the user has reached.
-    if (mastery_record is None or mastery_record.status == "locked"):
-        raise HTTPException(
-            status_code=403,
-            detail="Topic is locked."
-        )
-
-
-    if (topic.content_status not in ["empty", "failed"]):
-        raise HTTPException(
-            status_code=409,
-            detail="Topic is already generated."
-        )
-
-
-    # User should see that their request actually went through and is processing.
-    topic.content_status = "pending"
-    db.commit()
-
-    document_queue.enqueue(
-        process_topic,
-        topic.id,
-        job_timeout=300
-    )
 
 
 @router.delete("/{document_id}")

@@ -74,5 +74,8 @@ body {
   .lesson pre { @apply bg-background border border-border rounded-xl p-4 overflow-x-auto; }
   .lesson pre code { @apply bg-transparent border-0 p-0; }
   .lesson .katex-display { @apply overflow-x-auto overflow-y-hidden; }
+  .lesson table { @apply block overflow-x-auto; }
+  .lesson th, .lesson td { @apply border border-border px-3 py-2 text-left; }
+  .lesson th { @apply bg-background font-bold; }
 }
 

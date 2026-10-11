@@ -1,4 +1,5 @@
 import Markdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
 import "katex/dist/katex.min.css"
@@ -81,6 +82,11 @@ function addRuby(node: Node) {
 
 const rehypeRuby = () => addRuby
 
+// A | ends a table cell, so the one inside [[native script|romanization]] is escaped.
+function escapeAnnotations(lesson: string) {
+    return lesson.replace(/\[\[([^|\]]+?)\\?\|([^\]]+)\]\]/g, "[[$1\\|$2]]")
+}
+
 //
 
 export default function Lesson({
@@ -97,10 +103,10 @@ export default function Lesson({
                 <div className="p-8 overflow-y-auto">
                     <div className="lesson">
                         <Markdown
-                            remarkPlugins={[remarkMath]}
+                            remarkPlugins={[remarkGfm, remarkMath]}
                             rehypePlugins={[rehypeRuby, rehypeKatex]}
                         >
-                            {lesson}
+                            {escapeAnnotations(lesson)}
                         </Markdown>
                     </div>
                 </div>

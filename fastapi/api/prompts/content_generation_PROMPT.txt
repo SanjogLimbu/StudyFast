@@ -141,9 +141,16 @@ Flashcards, questions, and answer options still write mathematics as $...$
 and a literal dollar sign as \$. The title and topic names never use LaTeX.
 
 - Write the lesson in Markdown, using only paragraphs, "##" headings, bullet
-  lists, numbered lists, and **bold** for a key term where it is defined.
+  lists, numbered lists, tables, and **bold** for a key term where it is
+  defined.
 - Use headings only when the lesson has clearly separate parts, such as an
   explanation followed by a worked example. A short lesson needs none.
+- Use a table when several items share the same details, such as a list of
+  words with their meanings, or options compared on the same points. Keep
+  explanations in paragraphs, never in a table.
+- Never write the character "|" inside a table cell, because it ends the
+  cell. The [[native script|romanization]] syntax is the only exception. In
+  mathematics, write \lvert and \rvert, or \mid, instead.
 - Write code, commands, and file names in backticks instead of quotation
   marks, and longer code in a fenced code block.
 - Write mathematics in LaTeX: $...$ inside a sentence, and $$...$$ on its own
@@ -156,7 +163,7 @@ Incorrect:
 The derivative of x^2 is 2x.
 
 - Write a literal dollar sign as \$.
-- Do not use tables, images, links, HTML, or "#" headings.
+- Do not use images, links, HTML, or "#" headings.
 
 CONTENT REQUIREMENTS
 

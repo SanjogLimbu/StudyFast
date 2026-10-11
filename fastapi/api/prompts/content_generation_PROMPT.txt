@@ -11,8 +11,8 @@ Generate:
 1. A concise descriptive title, maximum 100 characters.
 2. A list of granular topics that make up the course.
 3. One short lesson for each topic.
-4. Exactly 10 flashcards for each topic.
-5. Exactly 20 multiple-choice questions for each topic.
+4. Between 4 and 12 flashcards for each topic.
+5. Between 8 and 24 multiple-choice questions for each topic.
 
 LEARNER REQUEST REQUIREMENTS
 
@@ -63,7 +63,7 @@ TOPIC REQUIREMENTS
   Do not use one broad topic called "Integration" if the course should teach
   integration by substitution, integration by parts, and partial fractions.
   Those should be separate topics.
-- Each topic gets exactly 10 flashcards and 20 questions, so one topic can
+- Each topic gets at most 12 flashcards and 24 questions, so one topic can
   only teach about 10 items that each have to be memorized.
 - When the subject contains a set of items that must each be learned
   individually, such as the characters of a writing system, split the set
@@ -136,7 +136,9 @@ LESSON REQUIREMENTS
 LESSON FORMATTING
 
 These rules apply to the lesson only. The title, topic names, flashcards,
-questions, and answer options are plain text and never use Markdown or LaTeX.
+questions, and answer options are plain text and never use Markdown.
+Flashcards, questions, and answer options still write mathematics as $...$
+and a literal dollar sign as \$. The title and topic names never use LaTeX.
 
 - Write the lesson in Markdown, using only paragraphs, "##" headings, bullet
   lists, numbered lists, and **bold** for a key term where it is defined.
@@ -173,7 +175,45 @@ CONTENT REQUIREMENTS
 - Avoid duplicate or near-duplicate flashcards and questions.
 - If a topic is narrow, test it from different angles such as:
   definition, application, comparison, recognition, and common mistakes.
+- Size the flashcards and questions to the topic. Go through the lesson and
+  write one flashcard for every definition, fact, rule, formula, condition,
+  method, and word or phrase it teaches, at least 4 and at most 12. Its
+  examples are not counted. A lesson that teaches ten of these gets ten
+  flashcards, and one that teaches five gets five. Write about two questions
+  for each flashcard, at least 8 and at most 24.
+- Never add trivial or repeated flashcards or questions to reach a larger
+  number, and never leave out something the lesson teaches to reach a smaller
+  one.
 - Make flashcards concise and suitable for active recall.
+- A flashcard asks the learner to recall something worth memorizing: a
+  definition, a fact, a rule, a formula, a condition, the steps of a method,
+  or the meaning or form of a word or phrase.
+- Never put a calculation or a problem to work out on a flashcard, including
+  the lesson's own worked examples. The learner sees the same card many
+  times, so they would memorize that one answer instead of the method.
+  Problems belong in the questions.
+
+Correct flashcard:
+What does $f(a)$ mean?
+
+Incorrect flashcard:
+For $f(x)=2x+3$, what is $f(4)$?
+
+Correct flashcard:
+What restriction does a denominator place on a function's domain?
+
+Incorrect flashcard:
+What is the domain of $g(x)=rac{1}{x-2}$?
+
+- Write all mathematics in flashcards, questions, and answer options in LaTeX
+  inside $...$, the same way as in the lesson.
+
+Correct:
+What is the domain of $f(x)=\sqrt{x-7}$?
+
+Incorrect:
+What is the domain of f(x) = sqrt(x - 7)?
+
 - Associate every flashcard and every question with exactly one generated topic.
 - Questions should test understanding, application, recognition, or recall.
 - Include a mixture of easy, medium, and hard questions.
@@ -405,10 +445,15 @@ Before returning the output, verify all of the following:
   facts, and a method or procedure has a fully worked example.
 - Every flashcard and question can be answered from the lesson and the earlier
   topics.
-- The lesson uses only the allowed Markdown, with mathematics in LaTeX, and
-  nothing outside the lesson uses Markdown or LaTeX.
-- Each topic has exactly 10 flashcards.
-- Each topic has exactly 20 multiple-choice questions.
+- The lesson uses only the allowed Markdown, and nothing outside the lesson
+  uses Markdown.
+- Mathematics is written in LaTeX in the lesson, flashcards, questions, and
+  answer options, and never in the title or topic names.
+- Each topic has between 4 and 12 flashcards, one for each thing its lesson
+  teaches that is worth memorizing.
+- No flashcard is a calculation or a problem to work out.
+- Each topic has between 8 and 24 multiple-choice questions, about two for
+  each flashcard.
 - Every multiple-choice question has exactly four distinct options.
 - Every question has exactly one correct answer.
 - The "answer" field exactly matches the correct option.

@@ -3,8 +3,6 @@ import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
 import "katex/dist/katex.min.css"
 
-import LabeledText from "@/components/labeledText"
-
 //
 
 type Node = {
@@ -86,21 +84,15 @@ const rehypeRuby = () => addRuby
 //
 
 export default function Lesson({
-    name,
     lesson,
     onNext
 }: {
-    name: string
     lesson: string
     onNext: () => void
 }) {
     return (
         <div className="flex flex-col gap-6 items-center w-full">
             <div className="card w-full flex flex-col gap-4 p-8">
-                <h1 className="text-2xl font-extrabold">
-                    <LabeledText text={name} />
-                </h1>
-
                 <div className="lesson">
                     <Markdown
                         remarkPlugins={[remarkMath]}

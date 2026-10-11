@@ -6,14 +6,14 @@ from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from database import get_db
-from models import User, StudyDay
+from models import User, StudyDay, LoginSession
 from schemas import RegisterRequest, LoginRequest
-from hashing import hash_password, verify_password, create_access_token, decode_access_token
+from hashing import hash_password, verify_password, hash_session_token
 from datetime import datetime, timedelta, timezone
 
 ##
@@ -29,7 +29,34 @@ GOOGLE_CLIENT_ID = os.environ["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
 GOOGLE_REDIRECT_URI = f"{APP_URL}/api/auth/google/callback"
 
+# A session ends after this long without being used.
+SESSION_LIFETIME = timedelta(days=30)
+
 ##
+
+def start_session(response: Response, user_id: int, db: Session):
+    token = secrets.token_urlsafe(32)
+
+    db.add(
+        LoginSession(
+            user_id=user_id,
+            token_hash=hash_session_token(token),
+            expires_at=datetime.now(timezone.utc) + SESSION_LIFETIME
+        )
+    )
+
+    db.commit()
+
+    # The cookie outlives the session on purpose, as the session's expiry is checked on the server.
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=IS_PRODUCTION,
+        samesite="lax",
+        max_age=60*60*24*400
+    )
+
 
 @router.get("/google/login")
 def google_login():
@@ -134,14 +161,7 @@ def google_callback(
 
     response = RedirectResponse(f"{APP_URL}/home")
     response.delete_cookie("oauth_state")
-    response.set_cookie(
-        key="access_token",
-        value=create_access_token(user.id),
-        httponly=True,
-        secure=IS_PRODUCTION,
-        samesite="lax",
-        max_age=60*60*24
-    )
+    start_session(response, user.id, db)
 
     return response
 
@@ -224,49 +244,44 @@ def login(
         )
 
 
-    # Create json web token for user login that lasts 24 hours
-    token = create_access_token(existing_user.id)
-
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        secure=IS_PRODUCTION,
-        samesite="lax",
-        max_age=60*60*24
-    )
+    start_session(response, existing_user.id, db)
 
 
 def get_current_user(
-    access_token: str | None = Cookie(default=None), 
+    access_token: str | None = Cookie(default=None),
     db: Session = Depends(get_db)
 ):
     if (access_token is None):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User is not authorized."
-        ) 
+        )
 
 
-    uid = decode_access_token(access_token)
+    now =datetime.now(timezone.utc)
 
-    if (uid is None):
+    session = db.scalar(
+        select(LoginSession)
+        .where(
+            LoginSession.token_hash == hash_session_token(access_token),
+            LoginSession.expires_at > now
+        )
+    )
+
+    if (session is None):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User is not authorized."
         )
 
 
-    user = db.get(User, uid)
-
-    if (user is None):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="This user does not exist."
-        )
+    # Using a session keeps it alive. It is extended at most once a day so most requests don't write.
+    if (session.expires_at - now < SESSION_LIFETIME - timedelta(days=1)):
+        session.expires_at = now + SESSION_LIFETIME
+        db.commit()
 
 
-    return user 
+    return db.get(User, session.user_id)
 
 
 @router.get("/account")
@@ -278,7 +293,20 @@ def account(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/logout")
-def logout(response: Response):
+def logout(
+    response: Response,
+    access_token: str | None = Cookie(default=None),
+    db: Session = Depends(get_db)
+):
+    if (access_token is not None):
+        db.execute(
+            delete(LoginSession)
+            .where(LoginSession.token_hash == hash_session_token(access_token))
+        )
+
+        db.commit()
+
+
     response.delete_cookie(
         key="access_token",
         path="/"

@@ -4,7 +4,7 @@ If the request is rejected, the title is "Rejected" and the list of topics is em
 Otherwise, generate between 5 and 100 topics, sized to the scope of the request.
 A full beginner-to-advanced course on a broad subject should use all 100, or
 very close to it.
-Each topic gets only 10 flashcards and 20 questions, so a set of items that must
+Each topic gets at most 12 flashcards and 24 questions, so a set of items that must
 each be memorized, such as the characters of a writing system, needs a separate
 topic for about every 10 items.
 The lesson, flashcards, and questions for each topic are generated separately, from

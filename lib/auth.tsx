@@ -32,7 +32,7 @@ export async function getUser() {
   )
 
   
-  // Cookie exists, but JWT is invalid/expired
+  // Cookie exists, but the session is invalid/expired
   if (response.status === 401) {
     return
   }

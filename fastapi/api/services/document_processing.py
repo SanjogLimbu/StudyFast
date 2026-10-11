@@ -128,8 +128,8 @@ TOPIC_SCHEMA = {
                 ],
                 "additionalProperties": False
             },
-            "minItems": 10,
-            "maxItems": 10
+            "minItems": 4,
+            "maxItems": 12
         },
         "question_bank": {
             "type": "array",
@@ -167,8 +167,8 @@ TOPIC_SCHEMA = {
                 ],
                 "additionalProperties": False
             },
-            "minItems": 20,
-            "maxItems": 20
+            "minItems": 8,
+            "maxItems": 24
         }
     },
     "required": [
@@ -178,6 +178,12 @@ TOPIC_SCHEMA = {
     ],
     "additionalProperties": False
 }
+
+# Matches [[native script|romanization]].
+ANNOTATION = re.compile(r"\[\[([^|\]]+)\|([^\]]+)\]\]")
+
+# Matches text inside straight or curly double quotation marks.
+QUOTED = re.compile(r'["“]([^"”]+)["”]')
 
 ##
 
@@ -391,6 +397,38 @@ def generate_outline(text: str) -> dict:
     }
 
 
+def without_spaces(text: str) -> str:
+    return "".join(text.split()).casefold()
+
+
+# A question that quotes one form of its answer, such as How is "neko" written?, gives the answer
+# away when the options show both forms. Its options then keep only the form being asked for.
+def hide_quoted_form(question: dict):
+    quoted = [
+        without_spaces(text)
+        for text in QUOTED.findall(question["question"])
+    ]
+
+    answer = question["answer"]
+
+    if (without_spaces(ANNOTATION.sub(r"\2", answer)) in quoted):
+        kept = r"\1"
+
+    elif (without_spaces(ANNOTATION.sub(r"\1", answer)) in quoted):
+        kept = r"\2"
+
+    else:
+        return
+
+
+    question["options"] = [
+        ANNOTATION.sub(kept, option)
+        for option in question["options"]
+    ]
+
+    question["answer"] = ANNOTATION.sub(kept, answer)
+
+
 def generate_topic(material: str, topic: str, outline: str, source: str) -> dict:
     chosen_prompt = TOPIC_TASK 
     chosen_instruct = content_generation
@@ -405,5 +443,11 @@ def generate_topic(material: str, topic: str, outline: str, source: str) -> dict
         outline=outline
     )
 
-    return generate(chosen_instruct, material, task, "topic_content", TOPIC_SCHEMA)
+    content = generate(chosen_instruct, material, task, "topic_content", TOPIC_SCHEMA)
+
+    for question in content["question_bank"]:
+        hide_quoted_form(question)
+
+
+    return content
 

@@ -375,65 +375,67 @@ export default function Topic() {
 
     return (
         <>
-            <div className="min-h-screen flex flex-col items-center px-4 pt-6 pb-10">
-                {/* Break time has its own progress bar and back button, unless the lesson is covering it. */}
-                {(!breakData || lesson?.lesson) && (
-                    <div className="w-full max-w-2xl flex items-center gap-4 h-10">
-                        <Link
-                            href={`/documents/${documentId}/topics`}
-                            aria-label="Back to topics"
-                            className="btn btn-ghost h-9 w-9 px-0 shrink-0"
-                        >
-                            ✕
-                        </Link>
+            <div className="bg-black/80">
+                <div className="min-h-screen flex flex-col items-center px-4 pt-6 pb-10">
+                    {/* Break time has its own progress bar and back button, unless the lesson is covering it. */}
+                    {(!breakData || lesson?.lesson) && (
+                        <div className="w-full max-w-2xl flex items-center gap-4 h-10">
+                            <Link
+                                href={`/documents/${documentId}/topics`}
+                                aria-label="Back to topics"
+                                className="btn btn-ghost h-9 w-9 px-0 shrink-0"
+                            >
+                                ✕
+                            </Link>
 
-                        {progress !== undefined && (
-                            <ProgressBar progress={progress} className="flex-1" />
+                            {progress !== undefined && (
+                                <ProgressBar progress={progress} className="flex-1" />
+                            )}
+                        </div>
+                    )}
+
+
+                    <div className="flex-1 w-full max-w-2xl flex flex-col items-center justify-center py-8">
+                        {lesson?.lesson ? (
+                            <Lesson
+                                lesson={lesson.lesson}
+                                onNext={() => setLesson(undefined)}
+                            />
+                        ) : currentCard ? (
+                            <FlashcardTask
+                                card={currentCard}
+                                cardState={cardState}
+                                onReveal={() => setCardState("shown")}
+                                onReview={review}
+                                error={error} 
+                                ready={requestState == "ready"}
+                            />
+                        ) : breakData ? (
+                            <div className="w-full flex flex-col gap-3">
+                                <ProgressBar progress={breakData.completion || 0} />
+                                <RestingPeriod timeLeft={breakTimeLeft} documentId={documentId} />
+                            </div>
+                        ) : questions ? (
+                            <QuestionTask
+                                question={questions[Math.min(currentQuestion, questions.length - 1)]}
+                                selectedAnswer={selectedAnswer}
+                                questionResponse={questionResponse}
+                                onAnswer={submitAnswer}
+                            />
+                        ) : state == "complete" && (
+                            <TopicComplete documentId={documentId} />
                         )}
                     </div>
-                )}
-
-                <div className="flex-1 w-full max-w-2xl flex flex-col items-center justify-center py-8">
-                    {lesson?.lesson ? (
-                        <Lesson
-                            name={lesson.name}
-                            lesson={lesson.lesson}
-                            onNext={() => setLesson(undefined)}
-                        />
-                    ) : currentCard ? (
-                        <FlashcardTask
-                            card={currentCard}
-                            cardState={cardState}
-                            onReveal={() => setCardState("shown")}
-                            onReview={review}
-                            error={error} 
-                            ready={requestState == "ready"}
-                        />
-                    ) : breakData ? (
-                        <div className="w-full flex flex-col gap-3">
-                            <ProgressBar progress={breakData.completion || 0} />
-                            <RestingPeriod timeLeft={breakTimeLeft} documentId={documentId} />
-                        </div>
-                    ) : questions ? (
-                        <QuestionTask
-                            question={questions[Math.min(currentQuestion, questions.length - 1)]}
-                            selectedAnswer={selectedAnswer}
-                            questionResponse={questionResponse}
-                            onAnswer={submitAnswer}
-                        />
-                    ) : state == "complete" && (
-                        <TopicComplete documentId={documentId} />
-                    )}
                 </div>
+
+
+                {error != "" && (
+                    <NoticePrompt 
+                        message={error}
+                        onOkay={() => setError("")}
+                    />
+                )}
             </div>
-
-
-            {error != "" && (
-                <NoticePrompt 
-                    message={error}
-                    onOkay={() => setError("")}
-                />
-            )}
         </>
     )
 }

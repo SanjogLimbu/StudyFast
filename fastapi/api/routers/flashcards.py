@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from models import Topic, Document, User, Flashcard, FlashcardProgress, TopicMastery
 from schemas import ReviewRequest
 from routers.auth import get_current_user
+from services.mastery import update_mastery
 from fsrs import Scheduler, Card, Rating, State
 
 ##
@@ -242,6 +243,20 @@ def review(
     )
 
     progress.fsrs_data = card.to_json()
+
+    topic_mastery = db.scalar(
+        select(TopicMastery)
+        .where(
+            TopicMastery.topic_id == flashcard.topic_id,
+            TopicMastery.user_id == current_user.id
+        )
+    )
+
+    if (topic_mastery):
+        # Autoflush is off, so a new progress record must be flushed before mastery is recalculated from it.
+        db.flush()
+        update_mastery(db, topic_mastery)
+
 
     db.commit()
 

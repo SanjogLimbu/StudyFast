@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
 
@@ -11,6 +11,7 @@ from database import get_db
 from models import User, Topic, Question, Document, TopicMastery, QuestionSession, StudyDay
 from schemas import UserAnswer
 from routers.auth import get_current_user
+from services.mastery import update_mastery
 
 ##
 
@@ -265,19 +266,27 @@ def answer_question(
     finished = session.current_question_index >= len(question_ids)
     correct = user_answer.user_answer == question.answer
 
-    mastery = topic_mastery.mastery
+    # Each question is worth its share of the topic, so answering every question correctly once fills the quiz half of mastery.
+    step = 100 / db.scalar(
+        select(func.count())
+        .select_from(Question)
+        .where(Question.topic_id == topic_id)
+    )
 
     if (correct):
-        topic_mastery.mastery = min(
-            mastery + 3,
+        topic_mastery.quiz_mastery = min(
+            topic_mastery.quiz_mastery + step,
             100
         )
 
     else:
-        topic_mastery.mastery = max(
-            mastery - 3,
+        topic_mastery.quiz_mastery = max(
+            topic_mastery.quiz_mastery - step,
             0
         )
+
+
+    update_mastery(db, topic_mastery)
 
 
     if (finished):

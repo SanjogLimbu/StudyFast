@@ -57,6 +57,33 @@ class User(Base):
     )
 
 
+class LoginSession(Base):
+    __tablename__ = "login_sessions"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+
+    # Only a hash of the cookie's token is stored, so a leaked database can't be used to log in.
+    token_hash: Mapped[str] = mapped_column(
+        String(64),
+        unique=True,
+        index=True,
+        nullable=False
+    )
+
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+
+
 class StudyDay(Base):
     __tablename__ = "study_days"
 
@@ -120,6 +147,15 @@ class TopicMastery(Base):
         Float,
         nullable=False,
         default=0
+    )
+
+
+    # The quiz half of mastery. The other half is how well the topic's flashcards are remembered.
+    quiz_mastery: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0,
+        server_default="0"
     )
 
     topic: Mapped["Topic"] = relationship(

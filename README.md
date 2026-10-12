@@ -28,25 +28,16 @@ StudyFast turns a PDF, Word document, text file or a prompt into a course. Study
 
 ## Tech stack
 
-Layer | Technologies |
-
+| Layer | Technologies |
 | --- | --- |
-
-| Frontend | Next.js 16 (App Router) React 19 TypeScript, Tailwind CSS v4, react-markdown KaTeX |
-
-| Backend | FastAPI, SQLAlchemy 2.0 Pydantic, Alembic |
-
+| Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, react-markdown, KaTeX |
+| Backend | FastAPI, SQLAlchemy 2.0, Pydantic, Alembic |
 | Database | PostgreSQL (psycopg 3) |
-
 | Background jobs | Redis, RQ (with retries and a scheduler) |
-
 | AI | OpenAI Responses API with JSON‑schema structured outputs |
-
-Auth | Argon2 password hashing (pwdlib) Google OAuth, server‑side sessions in an HttpOnly cookie |
-
+| Auth | Argon2 password hashing (pwdlib), Google OAuth, server‑side sessions in an HttpOnly cookie |
 | Parsing and scheduling | pypdf, python-docx, py-fsrs |
-
-| Testing | Vitest React Testing Library |
+| Testing | Vitest, React Testing Library |
 
 ## Architecture
 

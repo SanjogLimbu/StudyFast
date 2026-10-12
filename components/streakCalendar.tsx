@@ -46,7 +46,7 @@ export default function StreakCalendar({ days }: { days: string[] }) {
     let current = 0
     let run = 0
 
-    
+
     // Counted from the earliest day given, not just the squares shown, so a streak can be longer than a year.
     const first = Math.min(start, ...days.map((day) => Date.parse(day)))
 
@@ -76,22 +76,32 @@ export default function StreakCalendar({ days }: { days: string[] }) {
 
     return (
         <div className="card w-fit max-w-full p-7 flex flex-col gap-5">
-            <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-1">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-1">
                 <p className="text-3xl font-extrabold tabular-nums">
-                    {current} 
-                    
+                    {current}{" "}
+
                     <span className="text-base font-bold text-accent">
-                        day streak
+                        Day streak
                     </span>
                 </p>
 
-                <p className="text-sm text-accent">
-                    Longest: 
-                    
-                    <span className="font-bold text-foreground">
-                        {longest} {longest === 1 ? "day" : "days"}
-                    </span>
-                </p>
+                <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-accent">
+                    <p>
+                        Highest streak{" "}
+
+                        <span className="font-bold text-foreground">
+                            {longest}
+                        </span>
+                    </p>
+
+                    <p>
+                        Active days{" "}
+
+                        <span className="font-bold text-foreground">
+                            {total}
+                        </span>
+                    </p>
+                </div>
             </div>
 
             <div className="flex gap-2 text-[10px] leading-2.75 text-accent">
@@ -129,10 +139,6 @@ export default function StreakCalendar({ days }: { days: string[] }) {
                     </div>
                 </div>
             </div>
-
-            <p className="text-xs text-accent">
-                {total} active {total === 1 ? "day" : "days"} in the last year
-            </p>
         </div>
     )
 }

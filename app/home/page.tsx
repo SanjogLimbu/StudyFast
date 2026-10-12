@@ -20,14 +20,68 @@ const ACCEPTED_FILES = ".pdf,.docx,.txt"
 
 //
 
-function EmptyUpload(
-{ 
-    onUpload 
-}: { 
-    onUpload: (event: React.ChangeEvent<HTMLInputElement>) => void 
+function PromptBar({
+    onPromptUpload,
+    prompt,
+    setPrompt,
+    className
+}: {
+    onPromptUpload: (prompt: string) => void,
+    prompt: string,
+    setPrompt: React.Dispatch<React.SetStateAction<string>>,
+    className?: string 
 }) {
     return (
-        <div className="w-full min-h-screen flex justify-center items-center p-6 pt-24">
+        <div className={`flex flex-col gap-1.5 group ${className}`}>
+            <form 
+                onSubmit={(event) => {
+                    event.preventDefault()
+                    onPromptUpload(prompt)
+                }}
+                className="relative"
+            >
+                <input
+                    id="prompt"
+                    placeholder="I want to learn English."
+                    className="input pr-10"
+                    onChange={(event) => setPrompt(event.target.value)}
+                    value={prompt}
+                />
+
+                <button
+                    type="submit"
+                    aria-label="Submit prompt"
+                    className={`
+                        absolute top-1.5 right-1.5 w-7 h-7 rounded-full text-white flex items-center justify-center 
+                        cursor-pointer transition-all hover:brightness-110 active:scale-95 
+                        ${prompt.length < 5 || prompt.length > 100000 ? "bg-danger" : "bg-primary"}
+                    `}
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 19V5M5 12l7-7 7 7" />
+                    </svg>
+                </button>
+            </form>
+        </div>
+    )
+}
+
+
+function EmptyUpload(
+{ 
+    onUpload,
+    onPromptUpload,
+    prompt,
+    setPrompt,
+}: { 
+    onUpload: (event: React.ChangeEvent<HTMLInputElement>) => void,
+    onPromptUpload: (prompt: string) => void,
+    prompt: string,
+    setPrompt: React.Dispatch<React.SetStateAction<string>>
+}) {
+    return (
+        <div className="w-full min-h-screen flex flex-col gap-5 justify-center items-center p-6 pt-24">
+            {/* Upload document and turn it into a course */}
             <label
                 htmlFor="file-upload"
                 className="
@@ -58,6 +112,26 @@ function EmptyUpload(
                     PDF, DOCX, or TXT
                 </p>
             </label>
+
+
+            <div className="w-full max-w-2xl flex items-center gap-3 my-1 text-accent">
+                <div className="flex-1 border-t border-border" />
+
+                <span className="text-xs font-bold">
+                    OR
+                </span>
+
+                <div className="flex-1 border-t border-border" />
+            </div>
+
+
+            {/* Enter prompt and turn it into a course */}
+            <PromptBar 
+                onPromptUpload={onPromptUpload}
+                prompt={prompt}
+                setPrompt={setPrompt} 
+                className="w-full max-w-2xl"
+            />
         </div>
     )
 }
@@ -227,44 +301,11 @@ function Create(
 
 
                 {/* Enter prompt and turn it into a course */}
-                <div className="flex flex-col gap-1.5 group">
-                    <label 
-                        htmlFor="prompt" 
-                        className="text-sm font-bold text-accent group-focus-within:text-primary transition-colors"
-                    >
-                        Prompt 
-                    </label>
-
-                    <form 
-                        onSubmit={(event) => {
-                            event.preventDefault()
-                            onPromptUpload(prompt)
-                        }}
-                        className="relative"
-                    >
-                        <input
-                            id="prompt"
-                            placeholder="I want to learn English."
-                            className="input pr-10"
-                            onChange={(event) => setPrompt(event.target.value)}
-                            value={prompt}
-                        />
-
-                        <button
-                            type="submit"
-                            aria-label="Submit prompt"
-                            className={`
-                                absolute top-1.5 right-1.5 w-7 h-7 rounded-full text-white flex items-center justify-center 
-                                cursor-pointer transition-all hover:brightness-110 active:scale-95 
-                                ${prompt.length < 5 || prompt.length > 100000 ? "bg-danger" : "bg-primary"}
-                            `}
-                        >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 19V5M5 12l7-7 7 7" />
-                            </svg>
-                        </button>
-                    </form>
-                </div>
+                <PromptBar 
+                    onPromptUpload={onPromptUpload}
+                    prompt={prompt}
+                    setPrompt={setPrompt} 
+                />
             </div>
         </div>
     )
@@ -456,7 +497,12 @@ export default function Home() {
                     <span className="w-8 h-8 border-3 border-border border-t-primary rounded-full animate-spin" />
                 </div>
             ) : documents.length == 0 ? (
-                <EmptyUpload onUpload={uploadFile} />
+                <EmptyUpload 
+                    onUpload={uploadFile} 
+                    onPromptUpload={uploadPrompt}
+                    prompt={prompt}
+                    setPrompt={setPrompt} 
+                />
             ) : (
                 <div className="w-full max-w-5xl mx-auto px-4 pt-28 pb-10">
                     <h1 className="text-3xl font-extrabold mb-6">

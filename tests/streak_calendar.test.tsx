@@ -15,7 +15,12 @@ function daysAgo(count: number) {
 
 
 function currentStreak() {
-    return parseInt(screen.getByText("day streak").parentElement?.textContent ?? "")
+    return parseInt(screen.getByText("Day streak").parentElement?.textContent ?? "")
+}
+
+
+function activeDays() {
+    return screen.getByText(/^Active days?$/).textContent
 }
 
 //
@@ -34,12 +39,12 @@ afterEach(() => {
 
 describe("streakCalendar.StreakCalendar", () => {
 
-    it("No activity shows a zero streak.", () => {
+    it("No activity shows a streak of 0.", () => {
         render(<StreakCalendar days={[]} />)
 
         expect(currentStreak()).toBe(0)
         expect(screen.queryByText("0 days")).not.toBeNull()
-        expect(screen.queryByText("0 active days in the last year")).not.toBeNull()
+        expect(activeDays()).toBe("0 Active days")
         expect(screen.queryAllByTitle(/^Active on/)).toHaveLength(0)
     })
 
@@ -49,11 +54,11 @@ describe("streakCalendar.StreakCalendar", () => {
 
         expect(currentStreak()).toBe(3)
         expect(screen.queryByText("3 days")).not.toBeNull()
-        expect(screen.queryByText("3 active days in the last year")).not.toBeNull()
+        expect(activeDays()).toBe("3 Active days")
     })
 
 
-    it("The streak survives today having no activity yet.", () => {
+    it("The streak stays while having no activity today yet.", () => {
         render(<StreakCalendar days={[daysAgo(2), daysAgo(1)]} />)
 
         expect(currentStreak()).toBe(2)
@@ -65,7 +70,7 @@ describe("streakCalendar.StreakCalendar", () => {
 
         expect(currentStreak()).toBe(1)
         expect(screen.queryByText("3 days")).not.toBeNull()
-        expect(screen.queryByText("4 active days in the last year")).not.toBeNull()
+        expect(activeDays()).toBe("4 Active days")
     })
 
 
@@ -75,7 +80,7 @@ describe("streakCalendar.StreakCalendar", () => {
         render(<StreakCalendar days={days} />)
 
         expect(currentStreak()).toBe(400)
-        expect(screen.queryByText("366 active days in the last year")).not.toBeNull()
+        expect(activeDays()).toBe("366 Active days")
     })
 
 
@@ -85,7 +90,7 @@ describe("streakCalendar.StreakCalendar", () => {
         expect(screen.getByTitle("Active on 12 Oct 2026").className).toContain("bg-primary")
         expect(screen.getByTitle("No activity on 11 Oct 2026").className).toContain("bg-border")
         expect(screen.queryByText("1 day")).not.toBeNull()
-        expect(screen.queryByText("1 active day in the last year")).not.toBeNull()
+        expect(activeDays()).toBe("1 Active day")
     })
 
 

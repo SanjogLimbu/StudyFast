@@ -172,7 +172,6 @@ def prompt(
     document = Document(
         user_id=current_user.id,
         original_filename="[Prompt]",
-        size_bytes=len(text.encode()),
         text=text,
         source="prompt"
     )
@@ -325,7 +324,6 @@ def upload(
     document = Document(
         user_id=current_user.id,
         original_filename=file.filename,
-        size_bytes=size,
         text=text
     )
 
@@ -366,7 +364,6 @@ def get_documents(
         select(
             Document.id,
             Document.title,
-            Document.size_bytes,
             Document.status,
             func.avg(TopicMastery.mastery).label("mastery")
         )
@@ -390,7 +387,6 @@ def get_documents(
         data = {
             "id": document.id,
             "title": document.title,
-            "size_bytes": document.size_bytes,
             "status": document.status,
 
             # A document without topics has no mastery to average.

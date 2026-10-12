@@ -185,6 +185,16 @@ ANNOTATION = re.compile(r"\[\[([^|\]]+)\|([^\]]+)\]\]")
 # Matches text inside straight or curly double quotation marks.
 QUOTED = re.compile(r'["“]([^"”]+)["”]')
 
+# Matches a quoted span, or a run of annotations with only spaces between them.
+# A run touching a letter, hyphen, apostrophe or bold marker never matches, such as [[て|te]]-form.
+QUOTED_OR_RUN = re.compile(
+    QUOTED.pattern + rf"|(?<![\w'’*-])(?P<run>{ANNOTATION.pattern}(?:\s*{ANNOTATION.pattern})*)(?![\w'’*-])"
+)
+
+# Matches a control character other than a new line or a tab that indents a line.
+# The model sometimes writes a LaTeX backslash as a JSON escape, which leaves one in the text.
+CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]|(?<=[^\n\t])\t")
+
 ##
 
 # Raised when a file's text can't be extracted, so the upload is rejected.
@@ -429,6 +439,55 @@ def hide_quoted_form(question: dict):
     question["answer"] = ANNOTATION.sub(kept, answer)
 
 
+# The learner never sees the brackets, so target-language text inside a sentence looks like the
+# English around it. Each run of annotations gets quotation marks, unless it already has them.
+def quote_annotations(text: str) -> str:
+    # Use the same quotation marks as the rest of the text.
+    opening, closing = ('"', '"') if ('"' in text) else ("“", "”")
+
+    def quote(match):
+        run = match["run"]
+
+        if (run is None):
+            return match[0]
+
+
+        return opening + run + closing
+
+
+    lines = []
+
+    for line in text.split("\n"):
+        rest = ANNOTATION.sub("", line)
+
+        # A table row, and a line of only target-language text, stay as they are.
+        if ("|" not in rest and any(character.isalpha() for character in rest)):
+            line = QUOTED_OR_RUN.sub(quote, line)
+
+
+        lines.append(line)
+
+
+    return "\n".join(lines)
+
+
+# Raising makes the job retry, so content with a broken LaTeX command is generated again instead of saved.
+def reject_control_characters(content: dict):
+    texts = [content["lesson"]]
+
+    for flashcard in content["flashcards"]:
+        texts += [flashcard["front"], flashcard["back"]]
+
+
+    for question in content["question_bank"]:
+        texts += [question["question"], question["answer"], *question["options"]]
+
+
+    for text in texts:
+        if (CONTROL.search(text)):
+            raise ValueError("The generated content contains a control character.")
+
+
 def generate_topic(material: str, topic: str, outline: str, source: str) -> dict:
     chosen_prompt = TOPIC_TASK 
     chosen_instruct = content_generation
@@ -444,9 +503,20 @@ def generate_topic(material: str, topic: str, outline: str, source: str) -> dict
     )
 
     content = generate(chosen_instruct, material, task, "topic_content", TOPIC_SCHEMA)
+    reject_control_characters(content)
+
+    content["lesson"] = quote_annotations(content["lesson"])
+
+    for flashcard in content["flashcards"]:
+        flashcard["front"] = quote_annotations(flashcard["front"])
+        flashcard["back"] = quote_annotations(flashcard["back"])
+
 
     for question in content["question_bank"]:
         hide_quoted_form(question)
+
+        # Options stand alone, so only the question itself is changed.
+        question["question"] = quote_annotations(question["question"])
 
 
     return content

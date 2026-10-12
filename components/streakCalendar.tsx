@@ -46,6 +46,7 @@ export default function StreakCalendar({ days }: { days: string[] }) {
     let current = 0
     let run = 0
 
+    
     // Counted from the earliest day given, not just the squares shown, so a streak can be longer than a year.
     const first = Math.min(start, ...days.map((day) => Date.parse(day)))
 
@@ -77,7 +78,9 @@ export default function StreakCalendar({ days }: { days: string[] }) {
         <div className="card w-fit max-w-full p-7 flex flex-col gap-5">
             <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-1">
                 <p className="text-3xl font-extrabold tabular-nums">
-                    {current} <span className="text-base font-bold text-accent">
+                    {current} 
+                    
+                    <span className="text-base font-bold text-accent">
                         day streak
                     </span>
                 </p>

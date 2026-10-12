@@ -28,9 +28,11 @@ function renderQuestion(selectedAnswer = "", questionResponse?: QuestionResponse
     return { onAnswer }
 }
 
+
 function optionButton(option: string) {
     return screen.getByRole("button", { name: new RegExp(option) })
 }
+
 
 afterEach(cleanup)
 

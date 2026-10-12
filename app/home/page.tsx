@@ -13,7 +13,6 @@ import { formatFileSize } from "@/lib/file_size"
 type DocumentData = {
     id: number,
     title: string,
-    size_bytes: number,
     status: string,
     mastery: number
 }
@@ -144,10 +143,6 @@ function Document({
                 {!failed && (
                     <div className="flex flex-col gap-2 w-full">
                         {ready && <ProgressBar progress={document.mastery} />}
-
-                        <span className="text-xs text-accent">
-                            {formatFileSize(document.size_bytes)}
-                        </span>
                     </div>
                 )}
             </button>
@@ -262,7 +257,7 @@ function Create(
                             className={`
                                 absolute top-1.5 right-1.5 w-7 h-7 rounded-full text-white flex items-center justify-center 
                                 cursor-pointer transition-all hover:brightness-110 active:scale-95 
-                                ${prompt.length < 5 || prompt.length > 255 ? "bg-danger" : "bg-primary"}
+                                ${prompt.length < 5 || prompt.length > 100000 ? "bg-danger" : "bg-primary"}
                             `}
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

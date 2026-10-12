@@ -31,6 +31,6 @@ class UserAnswer(BaseModel):
 class PromptRequest(BaseModel):
     user_prompt: str = Field(
         min_length=5,
-        max_length=255
+        max_length=100000
     )
 

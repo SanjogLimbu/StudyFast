@@ -181,7 +181,7 @@ Correct flashcard:
 What restriction does a denominator place on a function's domain?
 
 Incorrect flashcard:
-What is the domain of $g(x)=rac{1}{x-2}$?
+What is the domain of $g(x)=\frac{1}{x-2}$?
 
 - Write all mathematics in flashcards, questions, and answer options in LaTeX
   inside $...$, the same way as in the lesson.
@@ -288,6 +288,11 @@ Incorrect:
    appears inside an English sentence, put ONE pair of quotation marks around
    the whole word, phrase, sentence, or pattern, so it is easy to tell apart
    from the English. Never quote each word separately.
+
+   The learner never sees the brackets. [[私|watashi]] is displayed as plain
+   watashi, in the same font as the English around it, so the brackets do not
+   set it apart and never replace the quotation marks. This applies in the
+   lesson as well as in flashcards and questions.
 
 Correct:
 What does "[[감사합니다|gamsahamnida]]" mean?

@@ -190,11 +190,6 @@ class Document(Base):
         nullable=False
     )
 
-    size_bytes: Mapped[int] = mapped_column(
-        BigInteger,
-        nullable=False
-    )
-
 
     # Extracted at upload so the worker doesn't need access to the uploaded file.
     text: Mapped[str] = mapped_column(

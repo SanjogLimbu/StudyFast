@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import ProgressBar from "@/components/progressBar"
 import ConfirmationPrompt from "@/components/confirmationPrompt"
 import NoticePrompt from "@/components/noticePrompt"
-import { formatFileSize } from "@/lib/file_size"
 
 //
 

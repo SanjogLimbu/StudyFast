@@ -6,7 +6,7 @@ StudyFast turns a PDF, Word document, text file or a prompt into a course. Study
 
 - **Document upload**: PDF, DOCX and TXT files from 1 KB to 35 MB are accepted. If a file has no text that can be read StudyFast rejects it during upload. Shows an error message.
 
-- **Prompt courses**: A prompt of 5 to 255 characters for example "I want to learn Japanese" creates a StudyFast course from the model’s knowledge. No document is required.
+- **Prompt courses**: A prompt of 5 to 100K characters for example "I want to learn Japanese" creates a StudyFast course from the model’s knowledge. No document is required.
 
 - **AI course generation**: Each StudyFast course is divided into 5 to 100 topics that follow a prerequisite order. For every StudyFast topic StudyFast creates a lesson, 4 to 12 flashcards and a bank of 8 to 24 multiple‑choice questions. These are produced when the user clicks Generate on the topic.
 
@@ -41,15 +41,15 @@ StudyFast turns a PDF, Word document, text file or a prompt into a course. Study
 
 ## Architecture
 
-1. When a user uploads a file StudyFast streams it to disk in 1‑MB chunks. StudyFast checks the file type and size pulls out and cleans the text and saves a pending StudyFast document with that text. StudyFast then deletes the file and adds a job to the queue. If the user entered a prompt StudyFast saves that prompt as the document’s text away. The request finishes immediately.
+1. When a user uploads a file the backend streams it to disk in 1‑MB chunks. The backend checks the file type and size pulls out and cleans the text and saves a pending document with that text. The backend then deletes the file and adds a job to the queue. If the user entered a prompt, that prompt gets saved as the document’s text and the request finishes immediately.
 
-2. A background worker marks the StudyFast document as `processing`. StudyFast splits the stored text into sections that are roughly one page each. StudyFast then asks the model for a title and an ordered list of topics with each topic linked to the sections it needs. For a prompt StudyFast has no sections so the model plans the topics directly from the prompt. StudyFast requires the response to fit a JSON schema.
+2. A background worker marks the document as `processing`. The backend splits the stored text into sections that are roughly one page each. The backend then asks the model for a title and an ordered list of topics with each topic linked to the sections it needs. For a prompt, there's no material so there's no sections and thus the model plans the topics directly from the prompt. The backend requires the response to fit a JSON schema.
 
-3. StudyFast writes all topics in one transaction each topic storing its own sections. Once finished the StudyFast document becomes `ready`. Only the first StudyFast topic is unlocked at this point.
+3. The backend writes all topics in one transaction each topic storing its own sections. Once finished the StudyFast document becomes `ready`. Only the first topic is unlocked at this point.
 
-4. When a user presses Generate on a StudyFast topic StudyFast launches a second job that sends only that topic’s sections and the course outline, to the model. StudyFast then saves the lesson, flashcards and questions for that topic.
+4. When a user presses Generate on a topic, the backend launches a second job that sends only that topic’s sections and the course outline, to the model. The backend then saves the lesson, flashcards and questions for that topic.
 
-5. StudyFast’s frontend keeps polling until the topic is ready. The user then goes through the lesson, the flashcards and finally the quiz. When the quiz is finished StudyFast unlocks the topic.
+5. The frontend keeps polling until the topic is ready. The user then goes through the lesson, the flashcards and finally the quiz. When the quiz is finished StudyFast unlocks the topic.
 
 ## Engineering highlights
 

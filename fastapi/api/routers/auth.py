@@ -1,7 +1,9 @@
 import os
 import secrets
 import httpx
+import resend
 
+from pathlib import Path
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
@@ -11,8 +13,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from database import get_db
-from models import User, StudyDay, LoginSession
-from schemas import RegisterRequest, LoginRequest
+from models import User, StudyDay, LoginSession, EmailVerificationToken
+from schemas import RegisterRequest, LoginRequest, VerifyEmailRequest
 from hashing import hash_password, verify_password, hash_session_token
 from datetime import datetime, timedelta, timezone
 
@@ -32,7 +34,52 @@ GOOGLE_REDIRECT_URI = f"{APP_URL}/api/auth/google/callback"
 # A session ends after this long without being used.
 SESSION_LIFETIME = timedelta(days=30)
 
+# Letters and digits that are easy to tell apart. 8 of them is too many combinations to guess.
+CODE_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+resend.api_key = os.environ["RESEND_API_KEY"]
+
+# Exported from components/emails/verifyEmail.tsx with `npm run emails`.
+VERIFY_EMAIL_HTML = (Path(__file__).resolve().parent.parent / "emails" / "verify_email.html").read_text(encoding="utf-8")
+
 ##
+
+def get_current_user(
+    access_token: str | None = Cookie(default=None),
+    db: Session = Depends(get_db)
+):
+    if (access_token is None):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User is not authorized."
+        )
+
+
+    now =datetime.now(timezone.utc)
+
+    session = db.scalar(
+        select(LoginSession)
+        .where(
+            LoginSession.token_hash == hash_session_token(access_token),
+            LoginSession.expires_at > now
+        )
+    )
+
+    if (session is None):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User is not authorized."
+        )
+
+
+    # Using a session keeps it alive. It is extended at most once a day so most requests don't write.
+    if (session.expires_at - now < SESSION_LIFETIME - timedelta(days=1)):
+        session.expires_at = now + SESSION_LIFETIME
+        db.commit()
+
+
+    return db.get(User, session.user_id)
+
 
 def start_session(response: Response, user_id: int, db: Session):
     token = secrets.token_urlsafe(32)
@@ -56,6 +103,47 @@ def start_session(response: Response, user_id: int, db: Session):
         samesite="lax",
         max_age=60*60*24*400
     )
+
+
+def send_verification_code(user: User, db: Session):
+    code = "".join(secrets.choice(CODE_CHARACTERS) for _ in range(8))
+    token_hash = hash_session_token(code)
+    now = datetime.now(timezone.utc)
+
+    last_token = db.scalar(
+        select(EmailVerificationToken)
+        .where(
+            EmailVerificationToken.user_id == user.id
+        )
+    )
+
+
+    if (last_token):
+        last_token.token_hash = token_hash
+        last_token.created_at = now
+        last_token.expires_at = now + timedelta(minutes=30)
+
+    else:
+        db.add(
+            EmailVerificationToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                created_at=now,
+                expires_at=now + timedelta(minutes=30)
+            )
+        )
+
+
+    db.commit()
+
+    params: resend.Emails.SendParams = {
+        "from": "StudyFast <onboarding@studyfast.now>",
+        "to": user.email,
+        "subject": "Your StudyFast verification code",
+        "html": VERIFY_EMAIL_HTML.replace("{{code}}", code)
+    }
+
+    resend.Emails.send(params)
 
 
 @router.get("/google/login")
@@ -183,17 +271,20 @@ def register(
     existing_user = db.scalar(query)
 
     if (existing_user):
+        # An unverified account has no password yet, so signing up again only sends a new code.
+        if (not existing_user.email_verified):
+            send_verification_code(existing_user, db)
+            return
+
+
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account with this email already exists"
         )
 
 
-    hashed_password = hash_password(data.password)
-
     user = User(
-        email=email,
-        password_hash=hashed_password
+        email=email
     )
 
 
@@ -212,6 +303,54 @@ def register(
         )
 
 
+    send_verification_code(user, db)
+
+
+@router.post("/verify-email")
+def verify_email(
+    data: VerifyEmailRequest,
+    response: Response,
+    db: Session = Depends(get_db)
+):
+    existing_token = db.scalar(
+        select(EmailVerificationToken)
+        .where(EmailVerificationToken.token_hash == hash_session_token(data.code))
+    )
+
+    now = datetime.now(timezone.utc)
+
+    if (not existing_token):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Incorrect code."
+        )
+
+    elif (now >= existing_token.expires_at):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Code has expired."
+        )
+
+
+    user = db.get(User, existing_token.user_id)
+
+    if (user.email_verified):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Account is already verified."
+        )
+
+
+    existing_token.used_at = now
+
+    # The password is set here rather than at sign up, so only someone who can read the inbox can choose it.
+    user.password_hash = hash_password(data.password)
+    user.email_verified = True
+
+    # Logs the user in, and its commit also saves the changes above.
+    start_session(response, user.id, db)
+
+
 @router.post("/login",)
 def login(
     data: LoginRequest,
@@ -220,17 +359,29 @@ def login(
 ):
     email = data.email.lower().strip()
 
+
     # Check if account with email exists first.
-    query = select(User).where(
-        User.email == email 
+    existing_user = db.scalar(
+        select(User)
+        .where(
+            User.email == email 
+        )
     )
-    existing_user = db.scalar(query)
+
 
     # Accounts created with Google have no password to check.
     if (not existing_user or existing_user.password_hash is None):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email or password is not correct."
+        )
+
+
+    # User should be required to verify email first before being able to login.
+    if (not existing_user.email_verified):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email is not verified yet."
         )
 
 
@@ -245,43 +396,6 @@ def login(
 
 
     start_session(response, existing_user.id, db)
-
-
-def get_current_user(
-    access_token: str | None = Cookie(default=None),
-    db: Session = Depends(get_db)
-):
-    if (access_token is None):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User is not authorized."
-        )
-
-
-    now =datetime.now(timezone.utc)
-
-    session = db.scalar(
-        select(LoginSession)
-        .where(
-            LoginSession.token_hash == hash_session_token(access_token),
-            LoginSession.expires_at > now
-        )
-    )
-
-    if (session is None):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User is not authorized."
-        )
-
-
-    # Using a session keeps it alive. It is extended at most once a day so most requests don't write.
-    if (session.expires_at - now < SESSION_LIFETIME - timedelta(days=1)):
-        session.expires_at = now + SESSION_LIFETIME
-        db.commit()
-
-
-    return db.get(User, session.user_id)
 
 
 @router.get("/account")

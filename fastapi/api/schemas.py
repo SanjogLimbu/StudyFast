@@ -6,6 +6,10 @@ from pydantic import BaseModel, EmailStr, Field
 
 class RegisterRequest(BaseModel):
     email: EmailStr
+
+
+class VerifyEmailRequest(BaseModel):
+    code: str
     password: str = Field(
         min_length=5,
         max_length=128,

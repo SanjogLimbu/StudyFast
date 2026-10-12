@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest"
+    "test": "vitest",
+    "emails": "tsx scripts/exportEmails.tsx"
   },
   "dependencies": {
     "katex": "^0.16.47",
@@ -20,6 +21,7 @@
     "remark-math": "^6.0.0"
   },
   "devDependencies": {
+    "@react-email/components": "^1.0.12",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
@@ -31,6 +33,7 @@
     "eslint-config-next": "16.3.4",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^5.0.3"

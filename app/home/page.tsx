@@ -42,7 +42,7 @@ function PromptBar({
             >
                 <input
                     id="prompt"
-                    placeholder="I want to learn English."
+                    placeholder="I want to learn calculus."
                     className="input pr-10"
                     onChange={(event) => setPrompt(event.target.value)}
                     value={prompt}
@@ -452,9 +452,13 @@ export default function Home() {
 
         if (promptLength < 5) {
             setUploadError("Prompt must be at least 5 characters long.")
+
+            return
         }
-        else if (promptLength > 255) {
-            setUploadError("Prompt must be at least 5 characters long.")
+        else if (promptLength > 100000) {
+            setUploadError("Prompt is too long long.")
+
+            return
         }
 
 

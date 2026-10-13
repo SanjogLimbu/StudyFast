@@ -191,6 +191,12 @@ QUOTED_OR_RUN = re.compile(
     QUOTED.pattern + rf"|(?<![\w'’*-])(?P<run>{ANNOTATION.pattern}(?:\s*{ANNOTATION.pattern})*)(?![\w'’*-])"
 )
 
+# Matches a letter of a non-Latin script, such as kana, hangul or Cyrillic.
+NATIVE = r"[^\W\d_\u0000-\u02ff\u1e00-\u1eff]"
+
+# Matches a word left in native script beside an annotation, with only spaces or a blank between them.
+MIXED = re.compile(rf"\]\](?:[^\S\n]|_)*{NATIVE}|{NATIVE}(?:[^\S\n]|_)*\[\[")
+
 # Matches a control character other than a new line or a tab that indents a line.
 # The model sometimes writes a LaTeX backslash as a JSON escape, which leaves one in the text.
 CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]|(?<=[^\n\t])\t")
@@ -488,6 +494,24 @@ def reject_control_characters(content: dict):
             raise ValueError("The generated content contains a control character.")
 
 
+# The model sometimes annotates one word of a sentence and leaves its neighbours in native script.
+# Raising makes the job retry, so the topic is generated again instead of saved.
+def reject_mixed_scripts(content: dict):
+    texts = [content["lesson"]]
+
+    for flashcard in content["flashcards"]:
+        texts += [flashcard["front"], flashcard["back"]]
+
+
+    for question in content["question_bank"]:
+        texts += [question["question"], question["answer"], *question["options"]]
+
+
+    for text in texts:
+        if (MIXED.search(text)):
+            raise ValueError("The generated content mixes annotated and bare native script.")
+
+
 def generate_topic(material: str, topic: str, outline: str, source: str) -> dict:
     chosen_prompt = TOPIC_TASK 
     chosen_instruct = content_generation
@@ -504,6 +528,7 @@ def generate_topic(material: str, topic: str, outline: str, source: str) -> dict
 
     content = generate(chosen_instruct, material, task, "topic_content", TOPIC_SCHEMA)
     reject_control_characters(content)
+    reject_mixed_scripts(content)
 
     content["lesson"] = quote_annotations(content["lesson"])
 

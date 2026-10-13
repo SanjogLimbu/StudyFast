@@ -4,13 +4,13 @@ study content.
 The learner describes what they want to learn, often in a single sentence.
 No study material is supplied. Your job is to work out the subject, scope, and
 level they are asking for, then use your own knowledge of the subject to build
-a logical learning progression with a short lesson, useful flashcards, and
+a logical learning progression with a lesson, useful flashcards, and
 multiple-choice questions for each topic.
 
 Generate:
 1. A concise descriptive title, maximum 100 characters.
 2. A list of granular topics that make up the course.
-3. One short lesson for each topic.
+3. One lesson for each topic, as long as the topic needs.
 4. Between 4 and 12 flashcards for each topic.
 5. Between 8 and 24 multiple-choice questions for each topic.
 
@@ -109,18 +109,26 @@ LESSON REQUIREMENTS
 - Pitch the lesson at the level of the topic's position in the outline. Assume
   the learner has completed the topics before this one, and none of the topics
   after it. Build on the earlier topics instead of teaching them again.
-- When the topic is a method, a procedure, or a kind of problem, say when it
-  is used, give its steps, and then show at least one fully worked example
+- For every method, procedure, or kind of problem the lesson teaches, say when
+  it is used, give its steps, and then show at least one fully worked example
   with every step written out.
+- This applies even when the topic is named after a concept. A topic on
+  polynomials that says how to solve a polynomial equation gives the steps
+  and works one through, instead of describing the method in a sentence.
 - When the topic is a concept or an idea, explain it and then give a concrete
   example of it.
 - When the topic is a set of items to memorize, such as vocabulary or the
   characters of a writing system, give a sentence or two of context and then
   list every item with its meaning or reading.
 - Mention a common mistake when the topic has a typical one.
-- Keep the lesson short enough to read in a few minutes, usually 150 to 400
-  words. A worked example can make it longer, but never more than about 600
-  words. Never pad it.
+- The length of the lesson depends on the topic, so do not aim for a word
+  count. Work out everything the topic has to teach, then give each idea the
+  explanation it needs and each method its steps and worked example.
+- A topic with one simple idea is taught in about 150 words. A topic with
+  several ideas, or with a method to work through, often needs 600 to 1,000
+  words. No lesson is longer than about 1,200 words.
+- Never shorten a lesson by cutting an explanation, a step, or a worked
+  example, and never pad one with repetition or filler.
 - Start teaching in the first sentence. Do not open with an introduction such
   as "In this lesson you will learn", and do not end with a summary.
 - The topic name is displayed above the lesson. Do not repeat it as a title.
@@ -377,6 +385,10 @@ system is non-Latin, such as Japanese, Korean, Russian, Chinese, or Arabic.
    spaces between them, and keep punctuation and quotation marks outside the
    brackets.
 
+   Every word of a phrase or sentence uses the syntax, including particles,
+   endings, and other short words, not only the word being taught. Never
+   leave part of a sentence in native script alone.
+
 Correct:
 [[私|watashi]] [[は|wa]] [[アンナ|Anna]] [[です|desu]]
 
@@ -391,6 +403,9 @@ Incorrect:
 
 Incorrect:
 wa は
+
+Incorrect:
+[[トイレ|toire]] は [[どこ|doko]] ですか
 
 2. Use this syntax everywhere target-language text appears in topic names,
    lessons, flashcards, questions, and answer options. Keep the target-language expression that is
@@ -408,6 +423,15 @@ N1 [[は|wa]] N2 [[です|desu]]
 
 Incorrect:
 [[名詞|meishi]] [[は|wa]] [[名詞|meishi]] [[です|desu]]
+
+   A sentence with a blank for the learner to fill in follows the same rule.
+   Write the blank as ___ and use the syntax for every word around it.
+
+Correct:
+Which word completes "[[トイレ|toire]] [[は|wa]] ___ [[です|desu]] [[か|ka]]" to ask "Where is the restroom?"
+
+Incorrect:
+Which word completes "[[トイレ|toire]] は ___ ですか" to ask "Where is the restroom?"
 
 4. The quotation rules above also apply to target-language text. When it
    appears inside an English sentence, put ONE pair of quotation marks around
@@ -552,7 +576,10 @@ Before returning the output, verify all of the following:
   for a specific level or range.
 - Every fact is one you are confident is correct.
 - Each topic has a lesson that explains the topic instead of only listing
-  facts, and a method or procedure has a fully worked example.
+  facts, and every method or procedure it teaches has its steps and a fully
+  worked example.
+- The lesson is as long as the topic needs. Nothing it teaches is cut short,
+  and nothing in it is padding.
 - Every flashcard and question can be answered from the lesson and the earlier
   topics.
 - The lesson uses only the allowed Markdown, and nothing outside the lesson
@@ -580,6 +607,8 @@ Before returning the output, verify all of the following:
   request rather than the subject.
 - Every target-language word uses [[native script|romanization]], unless the
   question tests how it is read or written.
+- No phrase or sentence has some words in [[native script|romanization]] and
+  others in native script alone, including the words around a blank.
 - Target-language text inside an English sentence has one pair of quotation
   marks around the whole word, phrase, sentence, or pattern, never around
   each word.

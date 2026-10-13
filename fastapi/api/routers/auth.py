@@ -334,6 +334,13 @@ def verify_email(
 
     user = db.get(User, existing_token.user_id)
 
+    if (not user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account was not found."
+        )
+
+
     if (user.email_verified):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

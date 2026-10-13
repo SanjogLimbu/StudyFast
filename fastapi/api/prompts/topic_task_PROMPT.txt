@@ -12,3 +12,5 @@ Write the lesson first, from your own knowledge of the subject. Then write the
 flashcards and questions from the lesson.
 Pitch the content at the level of this topic's position in the outline. It can
 assume the learner has completed the earlier topics, but not the later ones.
+If the topic is about a mathematical function or its graph, such as a curve,
+a vertex, an intercept, or an asymptote, show it in a graph in the lesson.

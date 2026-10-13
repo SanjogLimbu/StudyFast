@@ -114,10 +114,29 @@ Flashcards, questions, and answer options still write mathematics as $...$
 and a literal dollar sign as \$. The title and topic names never use LaTeX.
 
 - Write the lesson in Markdown, using only paragraphs, "##" headings, bullet
-  lists, numbered lists, tables, and **bold** for a key term where it is
-  defined.
-- Use headings only when the lesson has clearly separate parts, such as an
-  explanation followed by a worked example. A short lesson needs none.
+  lists, numbered lists, tables, graphs, and **bold**.
+- The lesson is read in a narrow column by someone seeing the topic for the
+  first time. A solid block of text is hard to follow there, so lay the lesson
+  out so that its parts can be seen at a glance.
+- Keep every paragraph short: one idea, in one to three sentences. Start a new
+  paragraph whenever the idea changes.
+- Open with one or two sentences that say what the topic is, with no heading
+  above them. Then give each part of the lesson its own "##" heading of a few
+  words, such as a rule, the steps of a method, a worked example, or a common
+  mistake. Only a lesson with a single part has no headings.
+- Use a bullet list whenever the lesson gives several things of the same kind,
+  such as types, forms, cases, properties, or conditions. Give each one its
+  own bullet, starting with its name or condition in bold, instead of joining
+  them into one long sentence.
+- Keep each bullet to one or two short sentences, with nothing between the
+  bullets of a list. When the items need more than that, such as a paragraph
+  each, give each item its own "##" heading instead of a bullet.
+- Use a numbered list for the steps of a method or procedure, with one action
+  in each step.
+- Keep the reasons in sentences. Why something is true and how it works are
+  explained in short paragraphs, never cut down to a list of fragments.
+- Use **bold** for a key term where it is defined, and for the name or
+  condition that starts a bullet. Do not bold anything else.
 - Use a table when several items share the same details, such as a list of
   words with their meanings, or options compared on the same points. Keep
   explanations in paragraphs, never in a table.
@@ -126,8 +145,20 @@ and a literal dollar sign as \$. The title and topic names never use LaTeX.
   mathematics, write \lvert and \rvert, or \mid, instead.
 - Write code, commands, and file names in backticks instead of quotation
   marks, and longer code in a fenced code block.
-- Write mathematics in LaTeX: $...$ inside a sentence, and $$...$$ on its own
-  line for a formula or a step of a worked example.
+- Write mathematics in LaTeX. Use $...$ inside a sentence only for something
+  short, such as a variable, a value, or a brief condition.
+- Write every formula, every equation, and every mathematical step of a
+  worked example as $$...$$ on a line of its own. It is then displayed
+  centered and apart from the text, where the learner can find it again.
+- The exception is an item of a bullet list or a table cell, which already
+  sets its content apart. A formula there stays in the sentence as $...$.
+- Write one equation in each $$...$$. Never place two equations next to each
+  other in a sentence, and never chain several forms together with "=" on one
+  line. Give each form its own line.
+- $...$ and $$...$$ are only for mathematics. Never put anything else inside
+  them, such as words, code, or text in the language being taught.
+- In a worked example, number the steps. Each step is a few words saying what
+  is done, followed by its result on a line of its own.
 
 Correct:
 The derivative of $x^2$ is $2x$.
@@ -135,8 +166,78 @@ The derivative of $x^2$ is $2x$.
 Incorrect:
 The derivative of x^2 is 2x.
 
+Correct:
+1. Split the middle term:
+   $$x^2+2x+3x+6=0$$
+2. Factor each pair:
+   $$x(x+2)+3(x+2)=0$$
+
+Incorrect:
+Split and group: $x^2+2x+3x+6=0$, so $x(x+2)+3(x+2)=0$.
+
 - Write a literal dollar sign as \$.
 - Do not use images, links, HTML, or "#" headings.
+
+LESSON GRAPHS
+
+A learner cannot picture a curve, a vertex, an intercept, or an asymptote from
+words alone. Show a graph whenever a lesson teaches a kind of mathematical
+function, or talks about the shape of its graph, or about a point or a line on
+it. A lesson that only defines a kind of function with a formula still shows a
+graph of an example, so the learner sees what it looks like. Write the graph
+as a fenced code block with the language "graph". The learner sees the graph
+drawn exactly from the lines inside the block, and never sees the block
+itself.
+
+Correct:
+```graph
+y = x^2 - 2x - 3
+dashed x = 1
+point (1, -4) Vertex
+point (-1, 0) Root
+point (3, 0) Root
+x from -3 to 5
+```
+
+Every line of a graph is one of these five kinds:
+
+- "y = x^2 - 2x - 3" draws a function of x. Write it with numbers, x, the
+  operators + - * / ^, parentheses, pi, e, and the functions sqrt(), cbrt(),
+  abs(), sin(), cos(), tan(), ln(), log(), and exp(). Never use LaTeX in it.
+  Every coefficient must be a number, because "y = ax^2 + bx + c" cannot be
+  drawn. A graph can draw up to three functions, to compare them.
+- "dashed x = 1" draws a dashed vertical line, and "dashed y = 2" draws a
+  dashed horizontal line. Use them for a line the lesson names, such as an
+  axis of symmetry, an asymptote, or a midline.
+- "point (1, -4) Vertex" marks a point and labels it with one or two words.
+- "x from -3 to 5" sets how much of the x-axis is shown. Every graph has this
+  line. Choose it so that every marked point and the important part of the
+  curve are inside it, with some room on each side.
+- "y from -6 to 6" sets how much of the y-axis is shown. Leave it out, so that
+  the graph fits the curve by itself, unless the curve runs off to infinity
+  inside the x range, as 1/x does.
+
+- A graph shows one specific example with numbers. To show a general rule,
+  such as which way a parabola opens, graph an example of it.
+- A graph of something the material teaches is not new content. Add one even
+  when the material has no picture, and use the material's own example when
+  it has one.
+- Work out the coordinates of every marked point from the function before
+  writing it. A point in the wrong place teaches the wrong thing.
+- Mark the points and lines that the lesson names, such as the vertex or the
+  roots, and nothing else.
+- Put the graph block right after the paragraph that explains what it shows,
+  at the place in the lesson where that idea is taught, not at the end. The
+  graph supports the explanation and never replaces it.
+- A sentence that mentions a graph is always followed by its graph block.
+  Never refer to a graph that the lesson does not contain.
+- Use a graph only for a mathematical function, where y is calculated from x.
+  Never make up a function to sketch a trend in another subject, such as how
+  temperature changes the rate of a reaction. The axes have no names, and the
+  numbers on them would be invented.
+- A lesson with no mathematical function to plot has no graph, and no lesson
+  has more than three.
+- Never mention the code block or how a graph is written. Call it "the graph".
 
 STUDY MATERIAL REQUIREMENTS
 
@@ -429,6 +530,13 @@ Before returning the output, verify all of the following:
   topics.
 - The lesson uses only the allowed Markdown, and nothing outside the lesson
   uses Markdown.
+- The lesson has no long paragraph. Its parts have headings, things of the
+  same kind are in a list, and every formula and worked example step is on a
+  line of its own.
+- A lesson about a mathematical function or its graph has a graph, no other
+  lesson has one, and no sentence mentions a graph that the lesson does not
+  contain. Every graph has an x range, a number for every coefficient, and
+  each marked point at its correct coordinates.
 - Mathematics is written in LaTeX in the lesson, flashcards, questions, and
   answer options, and never in the title or topic names.
 - Each topic has between 4 and 12 flashcards, one for each thing its lesson

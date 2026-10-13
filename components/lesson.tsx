@@ -1,8 +1,10 @@
-import Markdown from "react-markdown"
+import type { ComponentProps } from "react"
+import Markdown, { type ExtraProps } from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
 import "katex/dist/katex.min.css"
+import Graph from "@/components/graph"
 
 //
 
@@ -12,9 +14,24 @@ type Node = {
     value?: string
     properties?: Record<string, unknown>
     children?: Node[]
+    data?: { hProperties?: Record<string, unknown> }
+    position?: { start: { offset?: number } }
 }
 
 //
+
+// remark-math only gives $$...$$ its own line when each $$ is on a separate line, so a one-line $$...$$ is marked as display math here.
+function addDisplayMath(node: Node, file: { value: unknown }) {
+    if (node.type == "inlineMath" && String(file.value).startsWith("$$", node.position?.start.offset)) {
+        node.data!.hProperties!.className = ["language-math", "math-display"]
+    }
+
+
+    node.children?.forEach((child) => addDisplayMath(child, file))
+}
+
+
+const remarkDisplayMath = () => addDisplayMath
 
 // Turns [[native script|romanization]] into ruby text, as LabeledText does outside of Markdown.
 function addRuby(node: Node) {
@@ -87,6 +104,20 @@ function escapeAnnotations(lesson: string) {
     return lesson.replace(/\[\[([^|\]]+?)\\?\|([^\]]+)\]\]/g, "[[$1\\|$2]]")
 }
 
+// A code block in the "graph" language is drawn as a graph instead of shown as code.
+function CodeBlock({ node, children }: ComponentProps<"pre"> & ExtraProps) {
+    const code = node?.children[0]
+
+    if (code?.type == "element" && String(code.properties.className).includes("language-graph")) {
+        const text = code.children[0]
+
+        return <Graph source={text?.type == "text" ? text.value : ""} />
+    }
+
+
+    return <pre>{children}</pre>
+}
+
 //
 
 export default function Lesson({
@@ -103,8 +134,9 @@ export default function Lesson({
                 <div className="p-8 overflow-y-auto">
                     <div className="lesson">
                         <Markdown
-                            remarkPlugins={[remarkGfm, remarkMath]}
+                            remarkPlugins={[remarkGfm, remarkMath, remarkDisplayMath]}
                             rehypePlugins={[rehypeRuby, rehypeKatex]}
+                            components={{ pre: CodeBlock }}
                         >
                             {escapeAnnotations(lesson)}
                         </Markdown>

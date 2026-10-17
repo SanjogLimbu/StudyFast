@@ -168,7 +168,7 @@ def prompt(
 
 
     text = user_prompt.user_prompt
-
+    
     document = Document(
         user_id=current_user.id,
         original_filename="[Prompt]",

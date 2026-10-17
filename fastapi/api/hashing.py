@@ -22,3 +22,4 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 # Session tokens are long and random, so a fast hash is enough.
 def hash_session_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
+

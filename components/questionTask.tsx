@@ -52,7 +52,7 @@ export default function QuestionTask({
                             className={`
                                 card min-h-16 px-4 py-3 flex items-center gap-4 text-left text-lg cursor-pointer
                                 transition-colors duration-150 hover:border-primary hover:bg-primary-soft/40
-                                ${isAnswer ? "border-success! bg-green-50!" : choseWrong ? "border-danger! bg-red-50!" : ""}
+                                ${isAnswer ? "border-success! bg-success/10!" : choseWrong ? "border-danger! bg-danger/10!" : ""}
                             `}
                         >
                             <span className={`

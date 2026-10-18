@@ -229,7 +229,7 @@ function Document({
                 `
                     absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center
                     text-accent cursor-pointer transition-all opacity-60 group-hover:opacity-100
-                    hover:bg-red-50 hover:text-danger
+                    hover:bg-danger/10 hover:text-danger
                 `}
             >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

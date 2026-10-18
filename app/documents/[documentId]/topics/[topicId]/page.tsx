@@ -40,12 +40,14 @@ function StepBar({
     step,
     progress,
     documentId,
-    onOpenLesson
+    onOpenLesson,
+    onNext
 }: {
     step: number
     progress: number
     documentId: string
     onOpenLesson?: () => void
+    onNext?: () => void
 }) {
     return (
         <header className="shrink-0 border-b border-border">
@@ -80,6 +82,12 @@ function StepBar({
                 {onOpenLesson && (
                     <button className="btn btn-ghost h-9 px-3 text-sm shrink-0" onClick={onOpenLesson}>
                         Lesson
+                    </button>
+                )}
+
+                {onNext && (
+                    <button className="btn btn-primary h-9 px-4 text-sm shrink-0" onClick={onNext}>
+                        Next
                     </button>
                 )}
             </div>
@@ -152,7 +160,7 @@ function RestingPeriod({
 function TopicComplete({ documentId }: { documentId: string }) {
     return (
         <div className="w-full flex flex-col gap-3 items-center text-center">
-            <span className="w-14 h-14 rounded-full bg-green-50 text-success text-2xl font-bold flex items-center justify-center">
+            <span className="w-14 h-14 rounded-full bg-success/15 text-success text-2xl font-bold flex items-center justify-center">
                 ✓
             </span>
 
@@ -503,6 +511,7 @@ export default function Topic() {
                     progress={progress}
                     documentId={documentId}
                     onOpenLesson={lesson?.lesson && !unreadLesson ? () => setLessonOpen(true) : undefined}
+                    onNext={unreadLesson ? readLesson : undefined}
                 />
 
 
@@ -512,12 +521,6 @@ export default function Topic() {
                         {unreadLesson ? (
                             <div className="w-full text-[17px] sm:text-lg">
                                 <Lesson lesson={unreadLesson} />
-
-                                <div className="flex justify-center pt-10">
-                                    <button className="btn btn-primary w-full sm:w-48" onClick={readLesson}>
-                                        Next
-                                    </button>
-                                </div>
                             </div>
                         ) : currentCard ? (
                             <FlashcardTask

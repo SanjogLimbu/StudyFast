@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafbfc;
-  --foreground: #2f2e33;
-  --accent: #6b6a72;
+  color-scheme: dark;
+  --background: #111214;
+  --foreground: #e6e6ea;
+  --accent: #9b9aa3;
   --primary: #4f9cf0;
-  --primary-soft: #e8f2fe;
-  --border: #e3e5ea;
-  --surface: #ffffff;
+  --primary-soft: #1a2a3d;
+  --border: #2c2e34;
+  --surface: #1a1b1f;
   --danger: #e5484d;
   --success: #30a46c;
 }
@@ -29,15 +30,15 @@
 body {
   background-color: var(--background);
   background-image:
-    linear-gradient(#eef0f3 1px, transparent 1px),
-    linear-gradient(90deg, #eef0f3 1px, transparent 1px);
+    linear-gradient(#18191c 1px, transparent 1px),
+    linear-gradient(90deg, #18191c 1px, transparent 1px);
   background-size: 24px 24px;
   color: var(--foreground);
 }
 
 @layer components {
   .card {
-    @apply bg-surface border border-border rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)];
+    @apply bg-surface border border-border rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.3),0_4px_16px_rgba(0,0,0,0.25)];
   }
 
   .btn {
@@ -62,7 +63,7 @@ body {
   }
 
   .input-error {
-    @apply border-danger bg-red-50 focus:border-danger focus:ring-danger/15;
+    @apply border-danger bg-danger/10 focus:border-danger focus:ring-danger/15;
   }
 
   .lesson { @apply flex flex-col gap-4 leading-relaxed; }

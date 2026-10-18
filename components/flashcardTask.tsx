@@ -30,8 +30,8 @@ export default function FlashcardTask({
     return (
         <div className="flex flex-col gap-6 items-center w-full">
             <div className={`
-                card w-full min-h-80 flex flex-col items-center justify-center text-center p-8 gap-4
-                text-xl transition-all ${shown && "border-primary/40"}
+                card w-full min-h-80 flex flex-col items-center justify-center text-center p-10 gap-4
+                text-2xl font-semibold leading-snug transition-all ${shown ? "border-primary/40" : ""}
             `}>
                 <span className="text-xs font-bold uppercase tracking-wider text-accent">
                     {shown ? "Answer" : "Question"}

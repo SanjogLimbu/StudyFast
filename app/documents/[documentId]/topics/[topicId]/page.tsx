@@ -3,7 +3,6 @@
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-import ProgressBar from "@/components/progressBar"
 import Link from "next/link"
 import NoticePrompt from "@/components/noticePrompt"
 import Lesson from "@/components/lesson"
@@ -20,10 +19,106 @@ type Data = {
 
 type LessonData = {
     name: string,
-    lesson: string | null
+    lesson: string | null,
+    read: boolean
+}
+
+
+// A card also says how much of the topic's flashcards are done.
+type CardData = Flashcard & {
+    completion: number
 }
 
 //
+
+const STEPS = ["Lesson", "Flashcards", "Quiz"]
+
+//
+
+// The topic's steps, with the current one highlighted and its line filled as far as the user has got.
+function StepBar({
+    step,
+    progress,
+    documentId,
+    onOpenLesson
+}: {
+    step: number
+    progress: number
+    documentId: string
+    onOpenLesson?: () => void
+}) {
+    return (
+        <header className="shrink-0 border-b border-border">
+            <div className="max-w-2xl mx-auto px-6 h-16 flex items-center gap-4 sm:gap-5">
+                <Link
+                    href={`/documents/${documentId}/topics`}
+                    aria-label="Back to topics"
+                    className="btn btn-ghost h-9 w-9 px-0 shrink-0"
+                >
+                    ✕
+                </Link>
+
+                <ol className="flex-1 grid grid-cols-3 gap-2">
+                    {STEPS.map((name, i) => (
+                        <li key={name} aria-current={i == step ? "step" : undefined} className="flex flex-col gap-1.5 min-w-0">
+                            <span className={`text-xs font-semibold truncate ${i == step ? "text-foreground" : "text-accent"}`}>
+                                {name}
+                            </span>
+
+                            <span className="h-1 rounded-full bg-border overflow-hidden">
+                                <span
+                                    className="block h-full bg-primary transition-all duration-500"
+                                    style={{
+                                        width: `${i < step ? 100 : i == step ? progress : 0}%`
+                                    }}
+                                />
+                            </span>
+                        </li>
+                    ))}
+                </ol>
+
+                {onOpenLesson && (
+                    <button className="btn btn-ghost h-9 px-3 text-sm shrink-0" onClick={onOpenLesson}>
+                        Lesson
+                    </button>
+                )}
+            </div>
+        </header>
+    )
+}
+
+
+// Opens over the task, so the user can look something up without losing their place.
+function LessonPanel({
+    lesson,
+    onClose
+}: {
+    lesson: string
+    onClose: () => void
+}) {
+    return (
+        <>
+            <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
+
+            <aside className="fixed inset-y-0 right-0 z-40 w-full sm:max-w-lg bg-surface border-l border-border shadow-xl flex flex-col">
+                <div className="shrink-0 h-16 px-6 flex items-center justify-between border-b border-border">
+                    <span className="font-bold">
+                        Lesson
+                    </span>
+
+                    <button aria-label="Close lesson" className="btn btn-ghost h-9 w-9 px-0" onClick={onClose}>
+                        ✕
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-6 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <Lesson lesson={lesson} />
+                </div>
+            </aside>
+        </>
+    )
+}
+
 
 function RestingPeriod({
     timeLeft,
@@ -33,8 +128,8 @@ function RestingPeriod({
     documentId: string
 }) {
     return (
-        <div className="card w-full min-h-80 flex flex-col gap-2 items-center justify-center text-center p-8">
-            <span className="text-2xl font-extrabold">
+        <div className="w-full flex flex-col gap-2 items-center text-center">
+            <span className="text-2xl font-bold">
                 Break Time
             </span>
 
@@ -42,7 +137,7 @@ function RestingPeriod({
                 Your next cards will be ready in
             </span>
 
-            <span className="text-5xl font-extrabold text-primary tabular-nums my-2">
+            <span className="text-5xl font-semibold tabular-nums my-4">
                 {timeLeft}
             </span>
 
@@ -56,12 +151,12 @@ function RestingPeriod({
 
 function TopicComplete({ documentId }: { documentId: string }) {
     return (
-        <div className="card w-full min-h-80 flex flex-col gap-3 items-center justify-center text-center p-8">
-            <span className="w-16 h-16 rounded-full bg-green-50 text-success text-3xl font-extrabold flex items-center justify-center">
+        <div className="w-full flex flex-col gap-3 items-center text-center">
+            <span className="w-14 h-14 rounded-full bg-green-50 text-success text-2xl font-bold flex items-center justify-center">
                 ✓
             </span>
 
-            <span className="text-3xl font-extrabold">
+            <span className="text-2xl font-bold">
                 Topic Complete
             </span>
 
@@ -96,7 +191,7 @@ export default function Topic() {
 
     const [error, setError] = useState("")
 
-    const [currentCard, setCurrentCard] = useState<Flashcard>()
+    const [currentCard, setCurrentCard] = useState<CardData>()
     const [breakData, setBreakData] = useState<Data>()
     const [breakTimeLeft, setBreakTimeLeft] = useState<string>("")
 
@@ -105,8 +200,8 @@ export default function Topic() {
     const [questionResponse, setQuestionResponse] = useState<QuestionResponse>()
     const [selectedAnswer, setSelectedAnswer] = useState("")
 
-    // Cleared when the user presses next, which reveals the task underneath.
     const [lesson, setLesson] = useState<LessonData>()
+    const [lessonOpen, setLessonOpen] = useState(false)
 
     {/*
         getFlashcard also checks if user has finished flashcard tasks.
@@ -286,6 +381,25 @@ export default function Topic() {
     }
 
 
+    // The lesson closes straight away. If saving fails, it just opens by itself again on the next visit.
+    async function readLesson() {
+        setLesson({ ...lesson!, read: true })
+
+        try {
+            await fetch(
+                `/api/documents/${documentId}/topics/${topicId}/lesson/read`,
+                {
+                    method: "POST",
+                    credentials: "include"
+                }
+            )
+        }
+        catch {
+
+        }
+    }
+
+
     async function getFlashcard() {
         try {
             const response = await fetch(
@@ -370,38 +484,41 @@ export default function Topic() {
     }
 
 
-    const progress = questions ? Math.round(currentQuestion / questions.length * 1000) / 10 || 0 
-    : undefined
+    // The lesson opens by itself until it has been read, and from the Lesson button after that.
+    const unreadLesson = lesson?.read ? undefined : lesson?.lesson
+
+    // 0 is the lesson, 1 the flashcards, 2 the quiz and 3 a finished topic.
+    const step = unreadLesson ? 0 : state == "questions" ? 2 : state == "complete" ? 3 : 1
+
+    const progress = unreadLesson ? 0
+    : questions ? Math.round(currentQuestion / questions.length * 1000) / 10 || 0
+    : breakData ? breakData.completion
+    : currentCard?.completion ?? 0
 
     return (
         <>
-            <div className="bg-black/80">
-                {/* A lesson is held to the window height, so a long one scrolls inside its card instead of scrolling the page. */}
-                <div className={`${lesson?.lesson ? "h-dvh" : "min-h-screen pb-10"} flex flex-col items-center px-4 pt-6`}>
-                    {/* Break time has its own progress bar and back button, unless the lesson is covering it. */}
-                    {(!breakData || lesson?.lesson) && (
-                        <div className="w-full max-w-2xl flex items-center gap-4 h-10">
-                            <Link
-                                href={`/documents/${documentId}/topics`}
-                                aria-label="Back to topics"
-                                className="btn btn-ghost h-9 w-9 px-0 shrink-0"
-                            >
-                                ✕
-                            </Link>
-
-                            {progress !== undefined && (
-                                <ProgressBar progress={progress} className="flex-1" />
-                            )}
-                        </div>
-                    )}
+            <div className="h-dvh flex flex-col bg-surface">
+                <StepBar
+                    step={step}
+                    progress={progress}
+                    documentId={documentId}
+                    onOpenLesson={lesson?.lesson && !unreadLesson ? () => setLessonOpen(true) : undefined}
+                />
 
 
-                    <div className="flex-1 min-h-0 w-full max-w-2xl flex flex-col items-center justify-center py-8">
-                        {lesson?.lesson ? (
-                            <Lesson
-                                lesson={lesson.lesson}
-                                onNext={() => setLesson(undefined)}
-                            />
+                {/* The scrollbar is hidden, but the page still scrolls with the wheel, touch and keyboard. */}
+                <main className="flex-1 flex flex-col overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="flex-1 w-full max-w-2xl mx-auto px-6 py-10 flex flex-col items-center justify-center">
+                        {unreadLesson ? (
+                            <div className="w-full text-[17px] sm:text-lg">
+                                <Lesson lesson={unreadLesson} />
+
+                                <div className="flex justify-center pt-10">
+                                    <button className="btn btn-primary w-full sm:w-48" onClick={readLesson}>
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
                         ) : currentCard ? (
                             <FlashcardTask
                                 card={currentCard}
@@ -412,10 +529,7 @@ export default function Topic() {
                                 ready={requestState == "ready"}
                             />
                         ) : breakData ? (
-                            <div className="w-full flex flex-col gap-3">
-                                <ProgressBar progress={breakData.completion || 0} />
-                                <RestingPeriod timeLeft={breakTimeLeft} documentId={documentId} />
-                            </div>
+                            <RestingPeriod timeLeft={breakTimeLeft} documentId={documentId} />
                         ) : questions ? (
                             <QuestionTask
                                 question={questions[Math.min(currentQuestion, questions.length - 1)]}
@@ -427,8 +541,15 @@ export default function Topic() {
                             <TopicComplete documentId={documentId} />
                         )}
                     </div>
-                </div>
+                </main>
 
+
+                {lessonOpen && lesson?.lesson && (
+                    <LessonPanel
+                        lesson={lesson.lesson}
+                        onClose={() => setLessonOpen(false)}
+                    />
+                )}
 
                 {error != "" && (
                     <NoticePrompt 

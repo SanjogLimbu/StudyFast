@@ -120,33 +120,16 @@ function CodeBlock({ node, children }: ComponentProps<"pre"> & ExtraProps) {
 
 //
 
-export default function Lesson({
-    lesson,
-    onNext
-}: {
-    lesson: string
-    onNext: () => void
-}) {
+export default function Lesson({ lesson }: { lesson: string }) {
     return (
-        <div className="flex flex-col gap-6 items-center w-full min-h-0">
-            {/* The card clips the scrollbar of the div inside it, which keeps its corners rounded. */}
-            <div className="card w-full flex flex-col overflow-hidden">
-                <div className="p-8 overflow-y-auto">
-                    <div className="lesson">
-                        <Markdown
-                            remarkPlugins={[remarkGfm, remarkMath, remarkDisplayMath]}
-                            rehypePlugins={[rehypeRuby, rehypeKatex]}
-                            components={{ pre: CodeBlock }}
-                        >
-                            {escapeAnnotations(lesson)}
-                        </Markdown>
-                    </div>
-                </div>
-            </div>
-
-            <button className="btn btn-primary w-48 shrink-0" onClick={onNext}>
-                Next
-            </button>
+        <div className="lesson">
+            <Markdown
+                remarkPlugins={[remarkGfm, remarkMath, remarkDisplayMath]}
+                rehypePlugins={[rehypeRuby, rehypeKatex]}
+                components={{ pre: CodeBlock }}
+            >
+                {escapeAnnotations(lesson)}
+            </Markdown>
         </div>
     )
 }

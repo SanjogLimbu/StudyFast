@@ -206,6 +206,13 @@ class TopicMastery(Base):
         nullable=False
     )
 
+    # Set when the user finishes the lesson, so it only opens by itself on their first visit.
+    lesson_read: Mapped[bool] = mapped_column(
+        default=False,
+        server_default="false",
+        nullable=False
+    )
+
 
 class Document(Base):
     __tablename__ = "documents"

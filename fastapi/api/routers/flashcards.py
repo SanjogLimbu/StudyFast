@@ -86,6 +86,7 @@ def get_flashcard(
     
     now = datetime.now(timezone.utc)
     new_card = None
+    due_card = None
     soonest_due = None 
     completed_cards = 0 
 
@@ -102,12 +103,7 @@ def get_flashcard(
 
         if (not progress):
             if (not new_card):
-                new_card = {
-                    "state": "card",
-                    "id": flashcard.id,
-                    "front": flashcard.front,
-                    "back": flashcard.back
-                }
+                new_card = flashcard
                 
 
             continue
@@ -116,18 +112,8 @@ def get_flashcard(
         card = Card.from_json(progress.fsrs_data)
 
         if (card.due <= now):
-            if (topic_mastery.completed_flashcards):
-                topic_mastery.completed_flashcards = False
-
-                db.commit()
-
-
-            return {
-                "state": "card",
-                "id": flashcard.id,
-                "front": flashcard.front,
-                "back": flashcard.back
-            }
+            if (not due_card):
+                due_card = flashcard
 
         else:
             if (soonest_due is None or card.due < soonest_due):
@@ -139,17 +125,26 @@ def get_flashcard(
                 completed_cards += 1 
 
 
-    if (new_card):
+    completion = round(completed_cards / len(topic.flashcards) * 100, 1)
+
+    # Completion is sent with each card for the progress bar.
+    next_card = due_card or new_card
+
+    if (next_card):
         if (topic_mastery.completed_flashcards):
             topic_mastery.completed_flashcards = False
 
             db.commit()
 
 
-        return new_card
+        return {
+            "state": "card",
+            "id": next_card.id,
+            "front": next_card.front,
+            "back": next_card.back,
+            "completion": completion
+        }
 
-
-    completion = round(completed_cards / len(topic.flashcards) * 100, 1)
 
     # User should move onto doing practice questions after learning all the cards.
     if (completion == 100):

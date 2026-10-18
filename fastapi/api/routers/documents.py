@@ -461,10 +461,52 @@ def get_lesson(
         )
 
 
+    topic_mastery = db.scalar(
+        select(TopicMastery)
+        .where(
+            TopicMastery.topic_id == topic.id,
+            TopicMastery.user_id == current_user.id
+        )
+    )
+
     return {
         "name": topic.name,
-        "lesson": topic.lesson
+        "lesson": topic.lesson,
+        "read": topic_mastery is not None and topic_mastery.lesson_read
     }
+
+
+@router.post("/{document_id}/topics/{topic_id}/lesson/read")
+def read_lesson(
+    document_id: int,
+    topic_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = (
+        select(TopicMastery)
+        .join(Topic)
+        .join(Document)
+        .where(
+            Topic.id == topic_id,
+            Topic.document_id == document_id,
+            Document.user_id == current_user.id,
+            TopicMastery.user_id == current_user.id
+        )
+    )
+
+    topic_mastery = db.scalar(query)
+
+    if (topic_mastery is None):
+        raise HTTPException(
+            status_code=404,
+            detail="Topic not found."
+        )
+
+
+    topic_mastery.lesson_read = True
+
+    db.commit()
 
 
 @router.delete("/{document_id}")

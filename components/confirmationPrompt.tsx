@@ -20,7 +20,7 @@ export default function ConfirmationPrompt({
                 className="card p-6 w-full max-w-sm flex flex-col gap-6"
                 onClick={(event) => event.stopPropagation()}
             >
-                <p className="text-center text-lg font-bold">
+                <p className="text-center text-lg font-bold wrap-break-word">
                     {message}
                 </p>
 

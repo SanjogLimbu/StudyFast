@@ -93,6 +93,7 @@ def process_document(document_id: int):
         # Status will also become "pending" so that processing can try again.
         db.commit()
 
+
         # Document processing was succesful so now we need to generate content for the 1st topic.
         # Queued after the commit so process_topic can find the topic.
         if (document.topics):

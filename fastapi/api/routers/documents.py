@@ -6,6 +6,7 @@ from job_queue import document_queue
 from worker.tasks import process_document, process_topic
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from openai import APITimeoutError
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -13,9 +14,9 @@ from datetime import datetime, timezone
 
 from database import get_db
 from models import Document, User, Topic, TopicMastery
-from schemas import PromptRequest
+from schemas import PromptRequest, HelpPrompt
 from routers.auth import get_current_user
-from services.document_processing import UPLOAD_PATH, UnreadableDocumentError, extract_text
+from services.document_processing import UPLOAD_PATH, UnreadableDocumentError, extract_text, generate_help_response
 
 ##
 
@@ -535,4 +536,61 @@ def deleteDocument(
     db.delete(document)
     db.commit()
 
-    
+
+@router.post("/{document_id}/topics/{topic_id}/help")
+def help(
+    document_id: int,
+    topic_id: int,
+    request: HelpPrompt,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = (
+        select(Topic)
+        .join(Document)
+        .where(
+            Topic.id == topic_id,
+            Document.user_id == user.id
+        )
+    )
+
+    topic = db.scalar(query)
+
+    if (topic is None or not topic.lesson):
+        raise HTTPException(
+            status_code=403,
+            detail="Topic not found."
+        )
+
+    # The answer is about whatever the learner has on screen.
+    if (request.flashcard):
+        context = (
+            "The flashcard the learner is studying:\n"
+            f"Front: {request.flashcard.front}\n"
+            f"Back: {request.flashcard.back}"
+        )
+
+    elif (request.question):
+        options = "\n".join(f"- {option}" for option in request.question.options)
+
+        context = (
+            "The multiple-choice question the learner is answering:\n"
+            f"{request.question.question}\n\n"
+            f"Options:\n{options}"
+        )
+
+        if (request.question.answer):
+            context += f"\n\nThe learner has answered it. The correct answer is: {request.question.answer}"
+
+    else:
+        context = "The lesson the learner is reading:\n" + topic.lesson
+
+
+    try:
+        return generate_help_response(request.user_prompt, context)
+
+    except APITimeoutError:
+        raise HTTPException(
+            status_code=504,
+            detail="The answer took too long. Please try again."
+        )

@@ -29,6 +29,8 @@ TOPIC_TASK = (PROMPTS_PATH / "topic_task.txt").read_text(encoding="utf-8")
 OUTLINE_TASK_PROMPT = (PROMPTS_PATH / "outline_task_PROMPT.txt").read_text(encoding="utf-8")
 TOPIC_TASK_PROMPT = (PROMPTS_PATH / "topic_task_PROMPT.txt").read_text(encoding="utf-8")
 
+HELP_RESPONSE = (PROMPTS_PATH / "help_response.txt").read_text(encoding="utf-8")
+
 # Rejected material has the title "Rejected" and no topics, so topics has no minimum.
 OUTLINE_SCHEMA = {
     "type": "object",
@@ -175,6 +177,20 @@ TOPIC_SCHEMA = {
         "lesson",
         "flashcards",
         "question_bank"
+    ],
+    "additionalProperties": False
+}
+
+# The answer to a learner's question, shown as plain text in a notice.
+HELP_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "response": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "response"
     ],
     "additionalProperties": False
 }
@@ -545,4 +561,37 @@ def generate_topic(material: str, topic: str, outline: str, source: str) -> dict
 
 
     return content
+
+
+# Answered inside the request, so the call is capped instead of hanging the API process.
+def generate_help_response(prompt: str, context: str) -> dict:
+    response = client.with_options(timeout=20).responses.create(
+        model="gpt-5.6-luna",
+
+        instructions=HELP_RESPONSE,
+
+        # What the learner is looking at comes first, so the question is read against it.
+        input=[
+            {
+                "role": "developer",
+                "content": "Answer the user's questions with intuitive explanations.\n\n" + context
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+
+        text={
+            "format": {
+                "type": "json_schema",
+                "name": "help_response",
+                "strict": True,
+                "schema": HELP_SCHEMA
+            }
+        }
+    )
+
+
+    return json.loads(response.output_text) 
 

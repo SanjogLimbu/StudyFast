@@ -1,10 +1,12 @@
 "use client"
 
 import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 
 import Link from "next/link"
 import NoticePrompt from "@/components/noticePrompt"
+import HelpResponse from "@/components/helpResponse"
+import ConfirmationPrompt from "@/components/confirmationPrompt"
 import Lesson from "@/components/lesson"
 import FlashcardTask, { type Flashcard } from "@/components/flashcardTask"
 import QuestionTask, { type QuestionData, type QuestionResponse } from "@/components/questionTask"
@@ -50,7 +52,7 @@ function StepBar({
     onNext?: () => void
 }) {
     return (
-        <header className="shrink-0 border-b border-border">
+        <header className="shrink-0">
             <div className="max-w-2xl mx-auto px-6 h-16 flex items-center gap-4 sm:gap-5">
                 <Link
                     href={`/documents/${documentId}/topics`}
@@ -179,6 +181,52 @@ function TopicComplete({ documentId }: { documentId: string }) {
     )
 }
 
+// Owns the input text so typing only re-renders the bar, not the lesson above it.
+function PromptBar({ onAsk }: { onAsk: (prompt: string) => Promise<boolean> }) {
+    const [prompt, setPrompt] = useState("")
+    const [sending, setSending] = useState(false)
+
+    async function submit() {
+        setSending(true)
+        const sent = await onAsk(prompt)
+        setSending(false)
+
+        if (sent) {
+            setPrompt("")
+        }
+    }
+
+
+    return (
+        <div className="w-full h-15 bg-black/30 flex items-center justify-center border-t border-border">
+            <div className="flex gap-2">
+                <input
+                    id="prompt"
+                    required
+                    autoFocus
+                    placeholder="Can you explain this more?"
+                    className="input w-70 text-sm" 
+                    value={prompt}
+                    onChange={(event) => setPrompt(event.target.value)}
+                />
+
+                <button 
+                    className="btn btn-primary w-6 disabled:cursor-wait"
+                    onClick={submit}
+                    disabled={sending}
+                >
+                    {/* Same spinner as the home page, with a white arc so it shows on the blue button. */}
+                    {sending ? (
+                        <span className="w-4 h-4 shrink-0 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                        "→"
+                    )}
+                </button>
+            </div>
+        </div>
+    )
+}
+
 //
 
 export default function Topic() {
@@ -198,6 +246,7 @@ export default function Topic() {
     const [requestState, setRequestState] = useState("ready")
 
     const [error, setError] = useState("")
+    const [promptResponse, setPromptResponse] = useState<{ question: string, answer: string }>()
 
     const [currentCard, setCurrentCard] = useState<CardData>()
     const [breakData, setBreakData] = useState<Data>()
@@ -378,13 +427,17 @@ export default function Topic() {
             )
 
 
+            const data = await response.json()
+
             if (response.ok) {
-                const json = await response.json()
-                setLesson(json)
+                setLesson(data)
+            }
+            else {
+                setError(data.detail || "A server error occured.")
             }
         }
         catch {
-
+            setError("A network error occured.")
         }
     }
 
@@ -450,7 +503,7 @@ export default function Topic() {
             }
         }
         catch {
-
+            setError("A network error occured.")
         }
     }
 
@@ -489,6 +542,77 @@ export default function Topic() {
             setError("A server error occured.")
             setRequestState("ready")
         }
+    }
+
+
+    async function askQuestion(prompt: string) {
+        if (prompt.length < 5) {
+            setError("Enter at least 5 characters.")
+
+            return false
+        }
+        else if (prompt.length >= 10000) {
+            setError("Prompt is too long.")
+
+            return false
+        }
+
+
+        // Checked in the same order as the page picks what to show, so the help is about what is on screen.
+        // The server uses the lesson when neither a flashcard nor a question is sent.
+        const question = questions?.[Math.min(currentQuestion, questions.length - 1)]
+
+        const onScreen = unreadLesson ? {}
+        : currentCard ? {
+            flashcard: {
+                front: currentCard.front,
+                back: currentCard.back
+            }
+        }
+        : !breakData && question ? {
+            question: {
+                question: question.question,
+                options: question.options,
+                answer: questionResponse?.answer
+            }
+        }
+        : {}
+
+
+        try {
+            const response = await fetch(
+                `/api/documents/${documentId}/topics/${topicId}/help`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        user_prompt: prompt,
+                        ...onScreen
+                    })
+                }
+            )
+
+
+            const data = await response.json()
+
+            if (response.ok) {
+                setPromptResponse({
+                    question: prompt,
+                    answer: data.response
+                })
+            }
+            else {
+                setError(data.detail || "A server error occured.")
+            }
+        }
+        catch {
+            setError("A network error occured.")
+        }
+
+
+        return true
     }
 
 
@@ -554,12 +678,25 @@ export default function Topic() {
                     />
                 )}
 
-                {error != "" && (
+
+                {error && (
                     <NoticePrompt 
                         message={error}
                         onOkay={() => setError("")}
                     />
                 )}
+
+
+                {promptResponse && (
+                    <HelpResponse
+                        question={promptResponse.question}
+                        answer={promptResponse.answer}
+                        onClose={() => setPromptResponse(undefined)}
+                    />
+                )}
+
+
+                <PromptBar onAsk={askQuestion} />
             </div>
         </>
     )

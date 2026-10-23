@@ -181,7 +181,7 @@ function TopicComplete({ documentId }: { documentId: string }) {
     )
 }
 
-// Owns the input text so typing only re-renders the bar, not the lesson above it.
+
 function PromptBar({ onAsk }: { onAsk: (prompt: string) => Promise<boolean> }) {
     const [prompt, setPrompt] = useState("")
     const [sending, setSending] = useState(false)
@@ -199,7 +199,7 @@ function PromptBar({ onAsk }: { onAsk: (prompt: string) => Promise<boolean> }) {
 
     return (
         <div className="w-full h-15 bg-black/30 flex items-center justify-center border-t border-border">
-            <div className="flex gap-2">
+            <form className="flex gap-2">
                 <input
                     id="prompt"
                     required
@@ -207,22 +207,25 @@ function PromptBar({ onAsk }: { onAsk: (prompt: string) => Promise<boolean> }) {
                     placeholder="Can you explain this more?"
                     className="input w-70 text-sm" 
                     value={prompt}
-                    onChange={(event) => setPrompt(event.target.value)}
+                    onChange={(event) => {
+                        event.preventDefault()
+                        setPrompt(event.target.value)
+                    }}
+                    onSubmit={submit}
+                    disabled={sending}
                 />
 
                 <button 
                     className="btn btn-primary w-6 disabled:cursor-wait"
-                    onClick={submit}
-                    disabled={sending}
+                    type="submit"
                 >
-                    {/* Same spinner as the home page, with a white arc so it shows on the blue button. */}
                     {sending ? (
                         <span className="w-4 h-4 shrink-0 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
                         "→"
                     )}
                 </button>
-            </div>
+            </form>
         </div>
     )
 }
@@ -696,7 +699,9 @@ export default function Topic() {
                 )}
 
 
-                <PromptBar onAsk={askQuestion} />
+                {!breakData && state != "complete" && (
+                    <PromptBar onAsk={askQuestion} />
+                )}
             </div>
         </>
     )

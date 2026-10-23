@@ -199,7 +199,13 @@ function PromptBar({ onAsk }: { onAsk: (prompt: string) => Promise<boolean> }) {
 
     return (
         <div className="w-full h-15 bg-black/30 flex items-center justify-center border-t border-border">
-            <form className="flex gap-2">
+            <form 
+                className="flex gap-2"
+                onSubmit={(event) => {
+                    event.preventDefault()
+                    submit()
+                }}
+            >
                 <input
                     id="prompt"
                     required
@@ -207,17 +213,13 @@ function PromptBar({ onAsk }: { onAsk: (prompt: string) => Promise<boolean> }) {
                     placeholder="Can you explain this more?"
                     className="input w-70 text-sm" 
                     value={prompt}
-                    onChange={(event) => {
-                        event.preventDefault()
-                        setPrompt(event.target.value)
-                    }}
-                    onSubmit={submit}
-                    disabled={sending}
+                    onChange={(event) => setPrompt(event.target.value)}
                 />
 
                 <button 
                     className="btn btn-primary w-6 disabled:cursor-wait"
                     type="submit"
+                    disabled={sending}
                 >
                     {sending ? (
                         <span className="w-4 h-4 shrink-0 border-2 border-white/30 border-t-white rounded-full animate-spin" />

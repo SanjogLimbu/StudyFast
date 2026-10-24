@@ -274,6 +274,7 @@ def register(
         # An unverified account has no password yet, so signing up again only sends a new code.
         if (not existing_user.email_verified):
             send_verification_code(existing_user, db)
+            
             return
 
 
@@ -365,7 +366,6 @@ def login(
     db: Session = Depends(get_db)
 ):
     email = data.email.lower().strip()
-
 
     # Check if account with email exists first.
     existing_user = db.scalar(

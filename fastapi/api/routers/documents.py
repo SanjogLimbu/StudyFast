@@ -28,8 +28,12 @@ router = APIRouter(
 MIN_FILE_SIZE = 1 * 1024 # 1 KB
 MAX_FILE_SIZE = MIN_FILE_SIZE * 1024 * 35  # 35 MB
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt"}
-MAX_DAILY_UPLOADS_FREE = 1
-MAX_DAILY_UPLOADS_PAID = 5
+MAX_DAILY_UPLOADS_FREE = 2
+MAX_DAILY_UPLOADS_PAID = 10
+
+# Note that a prompt refers to a question prompt for help - prompts to create courses count as regular uploads.
+MAX_DAILY_PROMPTS_FREE = 5
+MAX_DAILY_UPLOADS_PAID = 25
 
 ##
 
@@ -37,6 +41,16 @@ def uploads_today(user):
     today = datetime.now(timezone.utc).date()
 
     if (user.last_upload.astimezone(timezone.utc).date() != today):
+        return 0 
+
+
+    return user.uploads
+
+
+def prompts_today(user):
+    today = datetime.now(timezone.utc).date()
+
+    if (user.last_prompt.astimezone(timezone.utc).date() != today):
         return 0 
 
 
@@ -545,6 +559,15 @@ def help(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    user_prompts_today = prompts_today(user.prompts)
+
+    if (user_prompts_today > MAX_DAILY_PROMPTS_FREE):
+        raise HTTPException(
+            status_code=429,
+            detail="Max daily prompts reached."
+        )
+
+    
     query = (
         select(Topic)
         .join(Document)
@@ -561,6 +584,7 @@ def help(
             status_code=403,
             detail="Topic not found."
         )
+
 
     # The answer is about whatever the learner has on screen.
     if (request.flashcard):

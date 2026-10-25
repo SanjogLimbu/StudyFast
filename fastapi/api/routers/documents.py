@@ -564,7 +564,7 @@ def help(
     if (user_prompts_today > MAX_DAILY_PROMPTS_FREE):
         raise HTTPException(
             status_code=429,
-            detail="Max daily prompts reached."
+            detail="You have reached your daily question prompt limit."
         )
 
     

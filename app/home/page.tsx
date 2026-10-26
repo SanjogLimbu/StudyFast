@@ -165,26 +165,53 @@ function AddDocument({
 
 function Document({
     document,
+    dragging,
     onOpen,
-    onDelete
+    onDelete,
+    onDragStart,
+    onDragEnter,
+    onDragEnd
 }: {
     document: DocumentData
+    dragging: boolean
     onOpen: () => void
     onDelete: () => void
+    onDragStart: () => void
+    onDragEnter: () => void
+    onDragEnd: () => void
 }) {
     const ready = document.status === "ready"
     const failed = document.status === "failed"
 
     return (
-        <div className={`relative group transition-all ${ready ? "hover:-translate-y-1" : ""}`}>
-            <button
-                onClick={onOpen}
-                disabled={!ready}
+        <div
+            draggable
+            onDragStart={(event) => {
+                // Firefox won't start a drag without data set.
+                event.dataTransfer.setData("text/plain", String(document.id))
+                event.dataTransfer.effectAllowed = "move"
+                onDragStart()
+            }}
+            onDragEnter={onDragEnter}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => event.preventDefault()}
+            onDragEnd={onDragEnd}
+            className={`relative group transition-all ${ready ? "hover:-translate-y-1" : ""} ${dragging ? "opacity-40" : ""}`}
+        >
+            {/* A div rather than a button, as Firefox can't start a drag from inside a button. */}
+            <div
+                role="button"
+                tabIndex={ready ? 0 : -1}
+                aria-disabled={!ready}
+                onClick={ready ? onOpen : undefined}
+                onKeyDown={(event) => {
+                    if (ready && event.key === "Enter") {
+                        onOpen()
+                    }
+                }}
                 className={`
                     card w-full h-40 p-4 flex flex-col justify-between text-left transition-all
-                    enabled:cursor-pointer enabled:group-hover:shadow-lg
-                    enabled:group-hover:border-primary
-                    ${failed ? "border-danger/40 disabled:cursor-default" : "disabled:cursor-wait"}
+                    ${ready ? "cursor-pointer group-hover:shadow-lg group-hover:border-primary" : failed ? "border-danger/40 cursor-default" : "cursor-wait"}
                 `}
             >
                 {ready ? (
@@ -218,7 +245,7 @@ function Document({
                         {ready && <ProgressBar progress={document.mastery} />}
                     </div>
                 )}
-            </button>
+            </div>
 
 
             <button
@@ -320,6 +347,7 @@ export default function Home() {
     const [uploadError, setUploadError] = useState("")
     const [openCreate, setOpenCreate] = useState(false)
     const [prompt, setPrompt] = useState("")
+    const [draggedId, setDraggedId] = useState<number>()
 
     useEffect(() => {
         getDocuments()
@@ -335,7 +363,7 @@ export default function Home() {
         )
 
 
-        if (!processing) {
+        if (!processing || draggedId !== undefined) {
             return
         }
 
@@ -347,7 +375,53 @@ export default function Home() {
 
         return () => clearTimeout(timeout)
 
-    }, [documents])
+    }, [documents, draggedId])
+
+
+    // Moves the dragged document into the hovered document's place.
+    function moveDocument(targetId: number) {
+        if (draggedId === undefined || draggedId === targetId) {
+            return
+        }
+
+
+        setDocuments(prev => {
+            if (!prev) {
+                return prev
+            }
+
+
+            const next = [...prev]
+            const from = next.findIndex(document => document.id === draggedId)
+            const to = next.findIndex(document => document.id === targetId)
+
+            next.splice(to, 0, next.splice(from, 1)[0])
+
+            return next
+        })
+    }
+
+
+    async function saveOrder() {
+        setDraggedId(undefined)
+
+        try {
+            await fetch(
+                "/api/documents/order",
+                {
+                    "method": "PUT",
+                    "headers": {
+                        "Content-Type": "application/json"
+                    },
+                    "credentials": "include",
+                    "body": JSON.stringify({ document_ids: documents?.map(document => document.id) })
+                }
+            )
+        }
+        catch {
+            setUploadError("A network error occured.")
+        }
+    }
 
 
     async function deleteDocument(documentId: number) {
@@ -522,6 +596,10 @@ export default function Home() {
                             <Document
                                 key={document.id}
                                 document={document}
+                                dragging={document.id === draggedId}
+                                onDragStart={() => setDraggedId(document.id)}
+                                onDragEnter={() => moveDocument(document.id)}
+                                onDragEnd={saveOrder}
                                 onOpen={() => router.push(`/documents/${document.id}/topics`)}
                                 onDelete={() => {
                                     if (document.status === "failed") {

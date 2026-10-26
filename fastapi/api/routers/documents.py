@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 
 from database import get_db
 from models import Document, User, Topic, TopicMastery
-from schemas import PromptRequest, HelpPrompt
+from schemas import PromptRequest, HelpPrompt, DocumentOrder
 from routers.auth import get_current_user
 from services.document_processing import UPLOAD_PATH, UnreadableDocumentError, extract_text, generate_help_response
 
@@ -393,7 +393,10 @@ def get_documents(
         )
         .where(Document.user_id == current_user.id)
         .group_by(Document.id)
-        .order_by(Document.uploaded_at.desc())
+        .order_by(
+            Document.position.asc().nulls_first(),
+            Document.uploaded_at.desc()
+        )
     )
 
     documents_data = []
@@ -412,6 +415,29 @@ def get_documents(
 
 
     return documents_data 
+
+
+@router.put("/order")
+def order_documents(
+    order: DocumentOrder,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = (
+        select(Document)
+        .where(
+            Document.user_id == current_user.id,
+            Document.id.in_(order.document_ids)
+        )
+    )
+
+    positions = {document_id: index for index, document_id in enumerate(order.document_ids)}
+
+    for document in db.scalars(query):
+        document.position = positions[document.id]
+
+
+    db.commit()
 
 
 @router.get("/{document_id}")

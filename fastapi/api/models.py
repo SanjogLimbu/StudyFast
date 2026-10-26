@@ -281,6 +281,12 @@ class Document(Base):
     )
 
 
+    # Set when the user reorders their documents. Unset documents are listed first, newest first.
+    position: Mapped[int | None] = mapped_column(
+        nullable=True
+    )
+
+
     # User -< Many Document
     user: Mapped["User"] = relationship(
         back_populates="documents"

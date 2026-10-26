@@ -39,6 +39,10 @@ class PromptRequest(BaseModel):
     )
 
 
+class DocumentOrder(BaseModel):
+    document_ids: list[int] = Field(max_length=1000)
+
+
 class HelpFlashcard(BaseModel):
     front: str = Field(max_length=2000)
     back: str = Field(max_length=2000)

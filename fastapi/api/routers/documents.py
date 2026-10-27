@@ -54,7 +54,7 @@ def prompts_today(user):
         return 0 
 
 
-    return user.uploads
+    return user.prompts
 
 
 def get_topics_and_document_mastery(current_user, document):
@@ -585,9 +585,9 @@ def help(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    user_prompts_today = prompts_today(user.prompts)
+    user_prompts_today = prompts_today(user)
 
-    if (user_prompts_today > MAX_DAILY_PROMPTS_FREE):
+    if (user_prompts_today >= MAX_DAILY_PROMPTS_FREE):
         raise HTTPException(
             status_code=429,
             detail="You have reached your daily question prompt limit."
@@ -637,10 +637,18 @@ def help(
 
 
     try:
-        return generate_help_response(request.user_prompt, context)
+        response = generate_help_response(request.user_prompt, context)
 
     except APITimeoutError:
         raise HTTPException(
             status_code=504,
             detail="The answer took too long. Please try again."
         )
+
+
+    # Only answered prompts count towards the daily limit.
+    user.last_prompt = datetime.now(timezone.utc)
+    user.prompts = user_prompts_today + 1
+    db.commit()
+
+    return response

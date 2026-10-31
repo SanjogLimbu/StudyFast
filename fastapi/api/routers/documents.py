@@ -652,3 +652,70 @@ def help(
     db.commit()
 
     return response
+
+
+@router.post("/{document_id}/topics/{topic_id}/regenerate")
+def regenerate(
+    document_id: int,
+    topic_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    document = db.scalar(
+        select(Document)
+        .where(
+            Document.id == document_id,
+            Document.user_id == user.id
+        )
+    )
+
+
+    if (document is None):
+        raise HTTPException(
+            status_code=403,
+            detail="Document not found."
+        )
+
+
+    # Lock the topic so a double click can't clear and queue it twice.
+    topic = db.scalar(
+        select(Topic)
+        .where(
+            Topic.id == topic_id,
+            Topic.document_id == document_id
+        )
+        .with_for_update()
+    )
+
+
+    if (topic is None):
+        raise HTTPException(
+            status_code=403,
+            detail="Topic not found."
+        )
+
+
+    # Clearing the content while the worker is writing it would mix old and new content.
+    if (topic.content_status in ["pending", "processing"]):
+        raise HTTPException(
+            status_code=409,
+            detail="Topic is already generating."
+        )
+
+
+    # Deleting the flashcards also deletes their review progress, so the topic's mastery starts over.
+    topic.lesson = None
+    topic.flashcards.clear()
+    topic.questions.clear()
+    topic.question_sessions.clear()
+    topic.content_status = "empty"
+
+    for record in topic.mastery_records:
+        record.mastery = 0
+        record.quiz_mastery = 0
+        record.lesson_read = False
+
+
+    db.flush()
+
+    generate_topic_content(document_id, topic_id, user, db)

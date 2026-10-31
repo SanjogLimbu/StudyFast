@@ -65,3 +65,4 @@ class HelpPrompt(BaseModel):
     # What the learner is looking at. The lesson is used when neither is sent.
     flashcard: HelpFlashcard | None = None
     question: HelpQuestion | None = None
+

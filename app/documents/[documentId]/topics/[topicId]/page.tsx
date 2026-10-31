@@ -5,8 +5,8 @@ import React, { useEffect, useState } from "react"
 
 import Link from "next/link"
 import NoticePrompt from "@/components/noticePrompt"
-import HelpResponse from "@/components/helpResponse"
 import ConfirmationPrompt from "@/components/confirmationPrompt"
+import HelpResponse from "@/components/helpResponse"
 import Lesson from "@/components/lesson"
 import FlashcardTask, { type Flashcard } from "@/components/flashcardTask"
 import QuestionTask, { type QuestionData, type QuestionResponse } from "@/components/questionTask"
@@ -43,13 +43,15 @@ function StepBar({
     progress,
     documentId,
     onOpenLesson,
-    onNext
+    onNext,
+    setConfirm
 }: {
     step: number
     progress: number
     documentId: string
     onOpenLesson?: () => void
     onNext?: () => void
+    setConfirm: () => void 
 }) {
     return (
         <header className="shrink-0">
@@ -92,6 +94,15 @@ function StepBar({
                         Next
                     </button>
                 )}
+
+                <button 
+                    className="btn btn-ghost h-9 px-3 text-sm shrink-0" 
+                    onClick={() => {
+                        setConfirm()
+                    }}
+                >
+                    Regenerate
+                </button>
             </div>
         </header>
     )
@@ -250,6 +261,7 @@ export default function Topic() {
     // Request states - ready, waiting
     const [requestState, setRequestState] = useState("ready")
 
+    const [confirm, setConfirm] = useState("")
     const [error, setError] = useState("")
     const [promptResponse, setPromptResponse] = useState<{ question: string, answer: string }>()
 
@@ -265,11 +277,6 @@ export default function Topic() {
     const [lesson, setLesson] = useState<LessonData>()
     const [lessonOpen, setLessonOpen] = useState(false)
 
-    {/*
-        getFlashcard also checks if user has finished flashcard tasks.
-        If user has finished flashcard tasks, question task will start.
-        The lesson is loaded first so the task never shows before it.
-    */}
     useEffect(() => {
         getLesson().then(getFlashcard)
     }, [])
@@ -323,6 +330,33 @@ export default function Topic() {
 
         return () => clearInterval(interval)
     }, [breakData])
+
+
+    async function regenerate() {
+        setConfirm("")
+
+        try {
+            const response = await fetch(
+                `/api/documents/${documentId}/topics/${topicId}/regenerate`,
+                {
+                    method: "POST",
+                    credentials: "include"
+                }
+            )
+
+
+            if (response.ok) {
+                router.replace(`/documents/${documentId}/topics`)
+            }
+            else {
+                const data = await response.json().catch(() => ({}))
+                setError(data.detail || "A server error occured.")
+            }
+        }
+        catch {
+            setError("A network error occured.")
+        }
+    }
 
 
     async function submitAnswer(user_answer: string) {
@@ -624,6 +658,7 @@ export default function Topic() {
     // The lesson opens by itself until it has been read, and from the Lesson button after that.
     const unreadLesson = lesson?.read ? undefined : lesson?.lesson
 
+
     // 0 is the lesson, 1 the flashcards, 2 the quiz and 3 a finished topic.
     const step = unreadLesson ? 0 : state == "questions" ? 2 : state == "complete" ? 3 : 1
 
@@ -641,6 +676,7 @@ export default function Topic() {
                     documentId={documentId}
                     onOpenLesson={lesson?.lesson && !unreadLesson ? () => setLessonOpen(true) : undefined}
                     onNext={unreadLesson ? readLesson : undefined}
+                    setConfirm={() => setConfirm("Are you sure you want to regenerate this topic?")}
                 />
 
 
@@ -688,6 +724,18 @@ export default function Topic() {
                     <NoticePrompt 
                         message={error}
                         onOkay={() => setError("")}
+                    />
+                )}
+
+
+                {confirm && (
+                    <ConfirmationPrompt 
+                        message={confirm}
+                        yesText="Regenerate"
+                        onYes={regenerate}
+                        onNo={() => {
+                            setConfirm("")
+                        }}
                     />
                 )}
 

@@ -236,6 +236,7 @@ function Document({
                 ) : (
                     <span className="flex items-center gap-2 text-accent text-sm font-bold">
                         <span className="w-4 h-4 border-2 border-border border-t-primary rounded-full animate-spin" />
+                        
                         Processing...
                     </span>
                 )}
@@ -615,6 +616,7 @@ export default function Home() {
                 </div>
             )}
 
+
             {uploadError ? (
                 <NoticePrompt 
                     message={uploadError}
@@ -629,6 +631,7 @@ export default function Home() {
                     setPrompt={setPrompt} 
                 />
             )}
+
 
             {documentToDelete && (
                 <ConfirmationPrompt

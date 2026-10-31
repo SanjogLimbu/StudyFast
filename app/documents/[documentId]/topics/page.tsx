@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
+import { getDocument } from "@/lib/document"
 import Link from "next/link"
-
 import ProgressBar from "@/components/progressBar"
 import NoticePrompt from "@/components/noticePrompt"
 import LabeledText from "@/components/labeledText"
-import { getDocument } from "@/lib/document"
 
 //
 
@@ -109,16 +108,18 @@ function Topic({
                     )}
                 </div>
             ) : (
-                <Link
-                    href={`/documents/${documentId}/topics/${topic.id}`}
-                    className="
-                        card min-h-28 px-3 py-2 flex justify-center items-center text-center font-bold z-2
-                        border-2 border-primary/30 transition-all
-                        hover:-translate-y-1 hover:shadow-lg hover:border-primary hover:text-primary
-                    "
-                >
-                    <LabeledText text={topic.name} />
-                </Link>
+                <>
+                    <Link
+                        href={`/documents/${documentId}/topics/${topic.id}`}
+                        className="
+                            card min-h-28 px-3 py-2 flex justify-center items-center text-center font-bold z-2
+                            border-2 border-primary/30 transition-all
+                            hover:-translate-y-1 hover:shadow-lg hover:border-primary hover:text-primary
+                        "
+                    >
+                        <LabeledText text={topic.name} />
+                    </Link>
+                </>
             )}
         </div>
     )
@@ -158,7 +159,6 @@ export default function Home() {
 
 
         return () => clearTimeout(timeout)
-
     }, [document])
 
 
@@ -169,36 +169,7 @@ export default function Home() {
             setDocument(data)
         }
     }
-
-
-    async function generateTopic(topicId: number) {
-        try {
-            const response = await fetch(
-                `/api/documents/${documentId}/topics/${topicId}/generate`,
-                {
-                    method: "POST",
-                    credentials: "include"
-                }
-            )
-
-
-            if (!response.ok) {
-                const json = await response.json().catch(() => ({}))
-                setError(json.detail ?? "Generation failed.")
-
-                return
-            }
-        }
-        catch {
-            setError("Generation failed.")
-
-            return
-        }
-
-
-        loadDocument()
-    }
-
+    
 
     return (
         <>
@@ -219,6 +190,7 @@ export default function Home() {
                 </div>
             </header>
 
+
             {document && (
                 <div className="w-full min-h-screen flex justify-center pt-32 pb-20 overflow-x-hidden">
                     <div className="flex flex-col items-center gap-10">
@@ -234,6 +206,7 @@ export default function Home() {
                     </div>
                 </div>
             )}
+
 
             {error && (
                 <NoticePrompt

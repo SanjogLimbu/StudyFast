@@ -1,5 +1,6 @@
 type Props = {
     message: string
+    yesText?: string
     onYes: () => void
     onNo: () => void
 }
@@ -8,6 +9,7 @@ type Props = {
 
 export default function ConfirmationPrompt({
     message,
+    yesText = "Delete",
     onYes,
     onNo
 }: Props) {
@@ -30,7 +32,7 @@ export default function ConfirmationPrompt({
                     </button>
 
                     <button onClick={onYes} className="btn btn-danger flex-1">
-                        Delete
+                        {yesText}
                     </button>
                 </div>
             </div>

@@ -445,9 +445,13 @@ Options:
 [[鳥|tori]]
 [[魚|sakana]]
 
-5. When a question tests how a word is read or how it is written, the full
-   syntax would reveal the answer. Show only the form the learner is given,
-   and make the options the form being asked for.
+5. When a flashcard or question tests how a word or character is read or how
+   it is written, the full syntax would reveal the answer, because the learner
+   sees the romanization and the native script together. This applies to any
+   wording, such as "How is it read?", "What is the reading of...?", "How is
+   it pronounced?", or "What sound does it make?". Show only the form the
+   learner is given, and write the answer or options in the form being asked
+   for.
 
 Correct (testing the reading):
 How is "猫" read?
@@ -457,6 +461,14 @@ inu
 tori
 sakana
 
+Correct (testing the reading on a flashcard):
+Front: What is the reading of "さ"?
+Back: sa
+
+Incorrect:
+Front: What is the reading of "[[さ|sa]]"?
+Back: sa
+
 Correct (testing the writing):
 How is "spasibo" written?
 Options:
@@ -465,8 +477,8 @@ Options:
 привет
 здравствуйте
 
-   For the same reason, never ask a question that the romanization itself
-   answers.
+   For the same reason, never write a flashcard or question that the
+   romanization itself answers.
 
 Incorrect:
 Which word means "kanji"?
@@ -578,7 +590,7 @@ Before returning the output, verify all of the following:
 - No topic, flashcard, or question is about the course or the document itself
   rather than the subject.
 - Every target-language word uses [[native script|romanization]], unless the
-  question tests how it is read or written.
+  flashcard or question tests how it is read or written.
 - No phrase or sentence has some words in [[native script|romanization]] and
   others in native script alone, including the words around a blank.
 - Target-language text inside an English sentence has one pair of quotation
@@ -586,7 +598,8 @@ Before returning the output, verify all of the following:
   each word.
 - Grammar pattern slots are written in English or as letter labels, not as
   target-language words.
-- No question is answered by its own romanization.
+- No flashcard or question shows the reading or writing it asks for, or is
+  answered by its own romanization.
 - Topic names use [[native script|romanization]] with no quotation marks.
 - The title does not use the [[native script|romanization]] syntax.
 - Language explanations are in plain everyday English, and no technical

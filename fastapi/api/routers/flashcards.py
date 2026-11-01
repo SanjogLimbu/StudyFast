@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
+from typing import Literal
 
 from database import get_db
 from datetime import datetime, timezone
@@ -9,6 +11,8 @@ from schemas import ReviewRequest
 from routers.auth import get_current_user
 from services.mastery import update_mastery
 from fsrs import Scheduler, Card, Rating, State
+from services.voice_generation import generate_voice
+from services.document_processing import UPLOAD_PATH
 
 ##
 
@@ -18,6 +22,8 @@ router = APIRouter(
 )
 
 scheduler = Scheduler()
+
+TTS_PATH = UPLOAD_PATH / "tts"
 
 ##
 
@@ -254,4 +260,45 @@ def review(
 
 
     db.commit()
+
+
+@router.get("/{flashcard_id}/tts/{side}")
+def tts(
+    flashcard_id: int,
+    side: Literal["front", "back"],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = (
+        select(Flashcard)
+        .join(Topic)
+        .join(Document)
+        .where(
+            Flashcard.id == flashcard_id,
+            Document.user_id == current_user.id
+        )
+    )
+
+    flashcard = db.scalar(query)
+
+    if (flashcard is None):
+        raise HTTPException(
+            status_code=404,
+            detail="Flashcard not found."
+        )
+
+
+    file_path = TTS_PATH / f"{flashcard.id}_{side}.mp3"
+    text = flashcard.front if side == "front" else flashcard.back
+
+    if (not file_path.exists()):
+        text = flashcard.front if side == "front" else flashcard.back
+        TTS_PATH.mkdir(parents=True, exist_ok=True)
+        file_path.write_bytes(generate_voice(text))
+
+    return FileResponse(
+        file_path,
+        media_type="audio/mpeg",
+        headers={"Cache-Control": "private, max-age=31536000"}
+    )
 

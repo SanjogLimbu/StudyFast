@@ -1,14 +1,28 @@
-from rq import Retry, get_current_job
+import time
 
+from rq import Retry, get_current_job
 from database import SessionLocal
 from job_queue import document_queue
 from models import Document, Topic, Flashcard, Question, TopicMastery
 from services import document_processing
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session, selectinload
+from services.voice_generation import TTS_PATH
 
 ##
 
+MAX_TTS_AGE = 30 * 24 * 60 * 60 # 30 Days
+
+##
+
+def delete_old_tts():
+    cutoff = time.time() - MAX_TTS_AGE
+
+    for file_path in TTS_PATH.glob("*.mp3"):
+        if (file_path.stat().st_mtime < cutoff):
+            file_path.unlink(missing_ok=True)
+
+            
 def add_topic_content(topic, content):
     topic.lesson = content["lesson"]
 

@@ -1,8 +1,9 @@
 from dotenv import load_dotenv
 from elevenlabs.client import ElevenLabs
+from services.document_processing import UPLOAD_PATH
 
 import os
-import random 
+import random
 
 ##
 
@@ -13,6 +14,8 @@ elevenlabs = ElevenLabs(
 )
 
 voice_ids = ["zfc8CJQpe8Kqyl0vvCzo", "IJxm2BPzAbIAYPy6kY6Q"]
+
+TTS_PATH = UPLOAD_PATH / "tts"
 
 ##
 

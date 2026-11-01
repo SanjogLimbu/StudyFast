@@ -11,8 +11,7 @@ from schemas import ReviewRequest
 from routers.auth import get_current_user
 from services.mastery import update_mastery
 from fsrs import Scheduler, Card, Rating, State
-from services.voice_generation import generate_voice
-from services.document_processing import UPLOAD_PATH
+from services.voice_generation import TTS_PATH, generate_voice
 
 ##
 
@@ -22,8 +21,6 @@ router = APIRouter(
 )
 
 scheduler = Scheduler()
-
-TTS_PATH = UPLOAD_PATH / "tts"
 
 ##
 
@@ -292,9 +289,12 @@ def tts(
     text = flashcard.front if side == "front" else flashcard.back
 
     if (not file_path.exists()):
-        text = flashcard.front if side == "front" else flashcard.back
         TTS_PATH.mkdir(parents=True, exist_ok=True)
         file_path.write_bytes(generate_voice(text))
+
+    else:
+        file_path.touch()
+
 
     return FileResponse(
         file_path,

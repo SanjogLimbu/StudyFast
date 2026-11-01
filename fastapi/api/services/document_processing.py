@@ -461,6 +461,25 @@ def hide_quoted_form(question: dict):
     question["answer"] = ANNOTATION.sub(kept, answer)
 
 
+# A flashcard or question that quotes a word with its reading, such as What sound does "[[さ|sa]]" represent?,
+# gives the answer away when the answer says that reading. The quoted word then keeps only its native script.
+def hide_quoted_reading(text: str, answer: str) -> str:
+    # Annotated words in the answer are examples, so only its other words can say the reading.
+    words = re.findall(r"\w+", ANNOTATION.sub("", answer).casefold())
+
+    def hide(match):
+        reading = re.findall(r"\w+", ANNOTATION.sub(r"\2", match[1]).casefold())
+
+        if (ANNOTATION.search(match[1]) and all(word in words for word in reading)):
+            return ANNOTATION.sub(r"\1", match[0])
+
+
+        return match[0]
+
+
+    return QUOTED.sub(hide, text)
+
+
 # The learner never sees the brackets, so target-language text inside a sentence looks like the
 # English around it. Each run of annotations gets quotation marks, unless it already has them.
 def quote_annotations(text: str) -> str:
@@ -549,7 +568,7 @@ def generate_topic(material: str, topic: str, outline: str, source: str) -> dict
     content["lesson"] = quote_annotations(content["lesson"])
 
     for flashcard in content["flashcards"]:
-        flashcard["front"] = quote_annotations(flashcard["front"])
+        flashcard["front"] = hide_quoted_reading(quote_annotations(flashcard["front"]), flashcard["back"])
         flashcard["back"] = quote_annotations(flashcard["back"])
 
 
@@ -557,7 +576,7 @@ def generate_topic(material: str, topic: str, outline: str, source: str) -> dict
         hide_quoted_form(question)
 
         # Options stand alone, so only the question itself is changed.
-        question["question"] = quote_annotations(question["question"])
+        question["question"] = hide_quoted_reading(quote_annotations(question["question"]), question["answer"])
 
 
     return content

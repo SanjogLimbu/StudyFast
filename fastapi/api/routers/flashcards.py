@@ -12,6 +12,7 @@ from routers.auth import get_current_user
 from services.mastery import update_mastery
 from fsrs import Scheduler, Card, Rating, State
 from services.voice_generation import TTS_PATH, generate_voice
+from services.document_processing import ANNOTATION
 
 ##
 
@@ -287,6 +288,9 @@ def tts(
 
     file_path = TTS_PATH / f"{flashcard.id}_{side}.mp3"
     text = flashcard.front if side == "front" else flashcard.back
+
+    # The voice reads the native script aloud, so the brackets and romanization are dropped.
+    text = ANNOTATION.sub(r"\1", text)
 
     if (not file_path.exists()):
         TTS_PATH.mkdir(parents=True, exist_ok=True)

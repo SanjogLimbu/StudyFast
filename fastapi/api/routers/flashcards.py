@@ -1,3 +1,5 @@
+import hashlib
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy import select
@@ -286,11 +288,13 @@ def tts(
         )
 
 
-    file_path = TTS_PATH / f"{flashcard.id}_{side}.mp3"
     text = flashcard.front if side == "front" else flashcard.back
 
     # The voice reads the native script aloud, so the brackets and romanization are dropped.
     text = ANNOTATION.sub(r"\1", text)
+
+    # Named by the spoken text, so audio made before a change to it, such as one reading the romanization too, isn't reused.
+    file_path = TTS_PATH / f"{flashcard.id}_{side}_{hashlib.sha256(text.encode()).hexdigest()[:16]}.mp3"
 
     if (not file_path.exists()):
         TTS_PATH.mkdir(parents=True, exist_ok=True)

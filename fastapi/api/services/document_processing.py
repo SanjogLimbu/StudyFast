@@ -435,30 +435,35 @@ def without_spaces(text: str) -> str:
 
 # A question that quotes one form of its answer, such as How is "neko" written?, gives the answer
 # away when the options show both forms. Its options then keep only the form being asked for.
+# The quote may be annotated too, such as Which kana is read as "[[さ|sa]]"?, so it keeps only the form it gives.
 def hide_quoted_form(question: dict):
-    quoted = [
-        without_spaces(text)
-        for text in QUOTED.findall(question["question"])
-    ]
-
     answer = question["answer"]
 
-    if (without_spaces(ANNOTATION.sub(r"\2", answer)) in quoted):
-        kept = r"\1"
-
-    elif (without_spaces(ANNOTATION.sub(r"\1", answer)) in quoted):
-        kept = r"\2"
-
-    else:
+    # A plain answer shows only one form already.
+    if (not ANNOTATION.search(answer)):
         return
 
 
-    question["options"] = [
-        ANNOTATION.sub(kept, option)
-        for option in question["options"]
-    ]
+    # The quote gives the reading and the options keep the native script, or the other way round.
+    for given, kept in [(r"\2", r"\1"), (r"\1", r"\2")]:
+        form = without_spaces(ANNOTATION.sub(given, answer))
 
-    question["answer"] = ANNOTATION.sub(kept, answer)
+        def gives_answer(text):
+            return without_spaces(ANNOTATION.sub(given, text)) == form
+
+        if (any(gives_answer(text) for text in QUOTED.findall(question["question"]))):
+            question["question"] = QUOTED.sub(
+                lambda match: ANNOTATION.sub(given, match[0]) if gives_answer(match[1]) else match[0],
+                question["question"]
+            )
+
+            question["options"] = [
+                ANNOTATION.sub(kept, option)
+                for option in question["options"]
+            ]
+
+            question["answer"] = ANNOTATION.sub(kept, answer)
+            return
 
 
 # A flashcard or question that quotes a word with its reading, such as What sound does "[[さ|sa]]" represent?,
@@ -573,10 +578,12 @@ def generate_topic(material: str, topic: str, outline: str, source: str) -> dict
 
 
     for question in content["question_bank"]:
+        # Options stand alone, so only the question itself is changed.
+        # Quoting first lets hide_quoted_form find an unquoted annotation, such as read as [[わたし|watashi]]?.
+        question["question"] = quote_annotations(question["question"])
         hide_quoted_form(question)
 
-        # Options stand alone, so only the question itself is changed.
-        question["question"] = hide_quoted_reading(quote_annotations(question["question"]), question["answer"])
+        question["question"] = hide_quoted_reading(question["question"], question["answer"])
 
 
     return content

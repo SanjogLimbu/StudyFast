@@ -714,6 +714,8 @@ def regenerate(
         record.mastery = 0
         record.quiz_mastery = 0
         record.lesson_read = False
+        record.completed_flashcards = False 
+        record.round = 0 
 
 
     db.flush()

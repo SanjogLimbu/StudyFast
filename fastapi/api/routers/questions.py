@@ -219,6 +219,13 @@ def answer_question(
             detail="Topic is locked."
         )
 
+
+    if (not topic_mastery.completed_flashcards):
+        raise HTTPException(
+            status_code=403,
+            detail="Flashcards must be completed first."
+        )
+
     
     # Session is from an earlier round; GET /questions regenerates it once the flashcards are completed again.
     if (session.round < topic_mastery.round):

@@ -161,7 +161,6 @@ def generate_topic_content(
         )
     )
 
-
 ##
 
 @router.post(
@@ -599,6 +598,7 @@ def help(
         .join(Document)
         .where(
             Topic.id == topic_id,
+            Topic.document_id == Document.id,
             Document.user_id == user.id
         )
     )

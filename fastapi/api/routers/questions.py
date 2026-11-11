@@ -188,6 +188,7 @@ def answer_question(
             QuestionSession.topic_id == topic_id,
             QuestionSession.user_id == current_user.id
         )
+        .with_for_update()
     ))
 
     if (not session):
@@ -273,13 +274,15 @@ def answer_question(
     finished = session.current_question_index >= len(question_ids)
     correct = user_answer.user_answer == question.answer
 
-
-    # Each question is worth its share of the topic, so answering every question correctly once fills the quiz half of mastery.
-    step = 100 / db.scalars(
+    total_questions = db.scalars(
         select(func.count())
         .select_from(Question)
         .where(Question.topic_id == topic_id)
     ).one()
+
+
+    # Each question is worth its share of the topic, so answering every question correctly once fills the quiz half of mastery.
+    step = 100 / total_questions
 
     if (correct):
         topic_mastery.quiz_mastery = min(
@@ -295,7 +298,6 @@ def answer_question(
 
 
     update_mastery(db, topic_mastery)
-
 
     if (finished):
         # Add a new streak day to the user. Model constraints ensure uniqueness so a check is not needed.
@@ -341,7 +343,6 @@ def answer_question(
 
 
     else:
-        
         return {
             "correct": correct,
             "answer": question.answer,

@@ -23,7 +23,17 @@ async def limit_body_size(request: Request, call_next):
         )
 
 
-    if (int(request.headers.get("content-length", 0)) > MAX_BODY_SIZE):
+    try:
+        content_length = int(request.headers.get("content-length", 0))
+
+    except:
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "Malfored error"}
+        )
+
+
+    if (content_length > MAX_BODY_SIZE):
         return JSONResponse(
             status_code=413,
             content={"detail": "File is too large."}

@@ -16,3 +16,4 @@ httpx==0.28.1
 alembic==1.17.0
 resend==2.49.1
 elevenlabs==2.75.0
+pytest==9.1.1

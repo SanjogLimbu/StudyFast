@@ -8,8 +8,6 @@ from rate_limiter import limiter
 
 from routers import auth, documents, flashcards, questions
 
-import time 
-
 ##
 
 MAX_BODY_SIZE = 36 * 1024 * 1024

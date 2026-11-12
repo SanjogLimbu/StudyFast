@@ -37,7 +37,7 @@ StudyFast turns a PDF, Word document, text file or a prompt into a course. Study
 | AI | OpenAI Responses API with JSON‑schema structured outputs |
 | Auth | Argon2 password hashing (pwdlib), Google OAuth, server‑side sessions in an HttpOnly cookie |
 | Parsing and scheduling | pypdf, python-docx, py-fsrs |
-| Testing | Vitest, React Testing Library |
+| Testing | Vitest, React Testing Library, pytest |
 
 ## Architecture
 

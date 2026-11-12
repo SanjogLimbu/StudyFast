@@ -6,7 +6,7 @@ import resend
 from pathlib import Path
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, Cookie
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
@@ -261,6 +261,7 @@ def google_callback(
 )
 @limiter.limit("3/minute")
 def register(
+    request: Request,
     data: RegisterRequest,
     db: Session = Depends(get_db)
 ):
@@ -312,6 +313,7 @@ def register(
 @router.post("/verify-email")
 @limiter.limit("3/minute")
 def verify_email(
+    request: Request,
     data: VerifyEmailRequest,
     response: Response,
     db: Session = Depends(get_db)
@@ -365,6 +367,7 @@ def verify_email(
 @router.post("/login",)
 @limiter.limit("3/minute")
 def login(
+    request: Request,
     data: LoginRequest,
     response: Response,
     db: Session = Depends(get_db)

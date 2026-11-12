@@ -11,6 +11,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from rate_limiter import limiter
 
 from database import get_db
 from models import User, StudyDay, LoginSession, EmailVerificationToken
@@ -258,6 +259,7 @@ def google_callback(
     "/register",
     status_code=status.HTTP_201_CREATED
 )
+@limiter.limit("3/minute")
 def register(
     data: RegisterRequest,
     db: Session = Depends(get_db)
@@ -308,6 +310,7 @@ def register(
 
 
 @router.post("/verify-email")
+@limiter.limit("3/minute")
 def verify_email(
     data: VerifyEmailRequest,
     response: Response,
@@ -360,6 +363,7 @@ def verify_email(
 
 
 @router.post("/login",)
+@limiter.limit("3/minute")
 def login(
     data: LoginRequest,
     response: Response,

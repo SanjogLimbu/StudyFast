@@ -2,19 +2,31 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from rate_limiter import limiter
+
 from routers import auth, documents, flashcards, questions
+
+import time 
 
 ##
 
 MAX_BODY_SIZE = 36 * 1024 * 1024
 
+app = FastAPI()
+app.state.limiter = limiter
+
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,  # type: ignore[arg-type]
+)
+
 ##
 
-app = FastAPI()
-
-# Reject oversized bodies before FastAPI parses them, as parsing happens before auth and the upload size check.
 @app.middleware("http")
 async def limit_body_size(request: Request, call_next):
+    # Reject oversized bodies before FastAPI parses them, as parsing happens before auth and the upload size check.
     # Chunked bodies have no declared length, so they can't be checked up front.
     if ("transfer-encoding" in request.headers):
         return JSONResponse(
@@ -29,7 +41,7 @@ async def limit_body_size(request: Request, call_next):
     except:
         return JSONResponse(
             status_code=403,
-            content={"detail": "Malfored error"}
+            content={"detail": "Header is malformed."}
         )
 
 
@@ -42,6 +54,7 @@ async def limit_body_size(request: Request, call_next):
 
     return await call_next(request)
 
+##
 
 app.add_middleware(
     CORSMiddleware,
@@ -59,6 +72,8 @@ app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(flashcards.router)
 app.include_router(questions.router)
+
+##
 
 @app.get("/")
 def health_check():

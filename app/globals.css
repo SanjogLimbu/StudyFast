@@ -80,3 +80,9 @@ body {
   .lesson th { @apply bg-background font-bold; }
 }
 
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #4f9cf0 transparent;
+  }
+}

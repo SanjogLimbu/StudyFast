@@ -41,14 +41,12 @@ export default function HelpResponse({
                     </button>
                 </div>
 
-                {/* The scrollbar is hidden, like the lesson's. */}
-                <div className="overflow-y-auto sm:flex-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="overflow-y-auto sm:flex-1 scrollbar-none [&::-webkit-scrollbar]:hidden">
                     <div className="w-full max-w-2xl mx-auto px-6 pt-3 pb-6 flex flex-col gap-5 sm:max-w-none sm:py-8">
                         <p className="hidden sm:block text-base text-accent border-l-2 border-border pl-3 wrap-break-word">
                             {question}
                         </p>
 
-                        {/* Same size as the lesson text. */}
                         <p className="text-[17px] sm:text-lg leading-relaxed wrap-break-word">
                             {answer}
                         </p>

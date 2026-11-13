@@ -18,26 +18,21 @@ type Data = {
     seconds_left: number
 }
 
-
 type LessonData = {
     name: string,
     lesson: string | null,
     read: boolean
 }
 
-
 // A card also says how much of the topic's flashcards are done.
 type CardData = Flashcard & {
     completion: number
 }
 
-//
-
 const STEPS = ["Lesson", "Flashcards", "Quiz"]
 
 //
 
-// The topic's steps, with the current one highlighted and its line filled as far as the user has got.
 function StepBar({
     step,
     progress,
@@ -193,20 +188,27 @@ function TopicComplete({ documentId }: { documentId: string }) {
 }
 
 
-function PromptBar({ onAsk }: { onAsk: (prompt: string) => Promise<boolean> }) {
+function QuestionPromptBar(
+{ 
+    onAsk 
+}: { 
+    onAsk: (prompt: string) => Promise<boolean> 
+}) {
     const [prompt, setPrompt] = useState("")
     const [sending, setSending] = useState(false)
 
     async function submit() {
         setSending(true)
-        const sent = await onAsk(prompt)
+
+        const success = await onAsk(prompt)
+
         setSending(false)
 
-        if (sent) {
+        // We should only clear prompt if request was actually succesful otherwise it would be annoying having to re-type the prompt.
+        if (success) {
             setPrompt("")
         }
     }
-
 
     return (
         <div className="w-full h-15 bg-black/30 flex items-center justify-center border-t border-border">
@@ -251,7 +253,6 @@ export default function Topic() {
     const documentId = params.documentId as string 
     const topicId = params.topicId as string 
 
-
     // States - flashcards, questions, complete
     const [state, setState] = useState("flashcards")
 
@@ -264,6 +265,7 @@ export default function Topic() {
     const [confirm, setConfirm] = useState("")
     const [error, setError] = useState("")
     const [promptResponse, setPromptResponse] = useState<{ question: string, answer: string }>()
+    const [waiting, setWaiting] = useState(false)
 
     const [currentCard, setCurrentCard] = useState<CardData>()
     const [breakData, setBreakData] = useState<Data>()
@@ -360,7 +362,11 @@ export default function Topic() {
 
 
     async function submitAnswer(user_answer: string) {
-        if (selectedAnswer != "" && !questionResponse?.correct) {
+        if (questionResponse?.correct || waiting) {
+            return
+        }
+
+        if (selectedAnswer != "") {
             setQuestionResponse(undefined)
             setSelectedAnswer("")
 
@@ -373,12 +379,12 @@ export default function Topic() {
                 setCurrentQuestion(Math.min(questions!.length - 1, currentQuestion + 1))
             }
 
-
             return 
         }
 
-
         try {
+            setWaiting(true)
+
             const response = await fetch(
                 `/api/questions/${topicId}/${questions![currentQuestion].id}/answer`,
                 {
@@ -392,7 +398,6 @@ export default function Topic() {
                     })
                 }
             )
-
 
             if (response.ok) {
                 const json = await response.json()
@@ -426,8 +431,11 @@ export default function Topic() {
             }
         }
         catch {
-
+            setError("A network error occured.")
         }
+
+
+        setWaiting(false)
     }
 
 
@@ -633,7 +641,6 @@ export default function Topic() {
                 }
             )
 
-
             const data = await response.json()
 
             if (response.ok) {
@@ -641,6 +648,8 @@ export default function Topic() {
                     question: prompt,
                     answer: data.response
                 })
+
+                return true
             }
             else {
                 setError(data.detail || "A server error occured.")
@@ -650,8 +659,7 @@ export default function Topic() {
             setError("A network error occured.")
         }
 
-
-        return true
+        return false
     }
 
 
@@ -679,9 +687,7 @@ export default function Topic() {
                     setConfirm={() => setConfirm("Are you sure you want to regenerate this topic?")}
                 />
 
-
-                {/* The scrollbar is hidden, but the page still scrolls with the wheel, touch and keyboard. */}
-                <main className="flex-1 flex flex-col overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <main className="flex-1 flex flex-col overflow-y-auto">
                     <div className="flex-1 w-full max-w-2xl mx-auto px-6 py-10 flex flex-col items-center justify-center">
                         {unreadLesson ? (
                             <div className="w-full text-[17px] sm:text-lg">
@@ -711,7 +717,6 @@ export default function Topic() {
                     </div>
                 </main>
 
-
                 {lessonOpen && lesson?.lesson && (
                     <LessonPanel
                         lesson={lesson.lesson}
@@ -719,14 +724,12 @@ export default function Topic() {
                     />
                 )}
 
-
                 {error && (
                     <NoticePrompt 
                         message={error}
                         onOkay={() => setError("")}
                     />
                 )}
-
 
                 {confirm && (
                     <ConfirmationPrompt 
@@ -739,7 +742,6 @@ export default function Topic() {
                     />
                 )}
 
-
                 {promptResponse && (
                     <HelpResponse
                         question={promptResponse.question}
@@ -748,9 +750,8 @@ export default function Topic() {
                     />
                 )}
 
-
                 {!breakData && state != "complete" && (
-                    <PromptBar onAsk={askQuestion} />
+                    <QuestionPromptBar onAsk={askQuestion} />
                 )}
             </div>
         </>

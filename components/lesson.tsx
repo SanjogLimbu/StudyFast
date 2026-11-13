@@ -20,7 +20,6 @@ type Node = {
 
 //
 
-// remark-math only gives $$...$$ its own line when each $$ is on a separate line, so a one-line $$...$$ is marked as display math here.
 function addDisplayMath(node: Node, file: { value: unknown }) {
     if (node.type == "inlineMath" && String(file.value).startsWith("$$", node.position?.start.offset)) {
         node.data!.hProperties!.className = ["language-math", "math-display"]
@@ -33,7 +32,6 @@ function addDisplayMath(node: Node, file: { value: unknown }) {
 
 const remarkDisplayMath = () => addDisplayMath
 
-// Turns [[native script|romanization]] into ruby text, as LabeledText does outside of Markdown.
 function addRuby(node: Node) {
     // Code and maths are left alone.
     if (!node.children || node.tagName == "code") {
@@ -86,7 +84,6 @@ function addRuby(node: Node) {
             lastIndex = match.index + match[0].length
         }
 
-
         parts.push({
             type: "text",
             value: text.slice(lastIndex)
@@ -99,12 +96,10 @@ function addRuby(node: Node) {
 
 const rehypeRuby = () => addRuby
 
-// A | ends a table cell, so the one inside [[native script|romanization]] is escaped.
 function escapeAnnotations(lesson: string) {
     return lesson.replace(/\[\[([^|\]]+?)\\?\|([^\]]+)\]\]/g, "[[$1\\|$2]]")
 }
 
-// A code block in the "graph" language is drawn as a graph instead of shown as code.
 function CodeBlock({ node, children }: ComponentProps<"pre"> & ExtraProps) {
     const code = node?.children[0]
 
@@ -114,8 +109,11 @@ function CodeBlock({ node, children }: ComponentProps<"pre"> & ExtraProps) {
         return <Graph source={text?.type == "text" ? text.value : ""} />
     }
 
-
-    return <pre>{children}</pre>
+    return (
+        <pre>
+            {children}
+        </pre>
+    )
 }
 
 //

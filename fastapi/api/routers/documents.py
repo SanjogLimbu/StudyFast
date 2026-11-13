@@ -28,7 +28,7 @@ router = APIRouter(
 MIN_FILE_SIZE = 1 * 1024 # 1 KB
 MAX_FILE_SIZE = MIN_FILE_SIZE * 1024 * 35  # 35 MB
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt"}
-MAX_DAILY_UPLOADS_FREE = 2
+MAX_DAILY_UPLOADS_FREE = 3
 MAX_DAILY_UPLOADS_PAID = 10
 
 # Note that a prompt refers to a question prompt for help - prompts to create courses count as regular uploads.

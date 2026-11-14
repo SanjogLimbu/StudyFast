@@ -1,14 +1,84 @@
-Generate the lesson, flashcards, and multiple-choice questions for this one topic only:
+
+Generate interactive lesson sections, flashcards, and
+multiple-choice questions for this one topic only:
+
 {topic}
 
-The material above is only the part of the document relevant to this topic.
+The material above contains the source content relevant
+to this topic.
 
 The full course outline, for context:
 {outline}
 
-The other topics are generated separately, so only cover this topic and do not
-teach or test the content of other topics except where this topic builds on it.
-Write the lesson first, as a simplified version of what the material above says
-about this topic. Then write the flashcards and questions from the lesson.
-If the topic is about a mathematical function or its graph, such as a curve,
-a vertex, an intercept, or an asymptote, show it in a graph in the lesson.
+The other topics are generated separately.
+
+Only cover knowledge that belongs to this topic.
+Do not teach or test later topics.
+
+Assume the learner has completed the earlier topics
+in the outline, but has not studied later topics.
+
+Generate lesson_sections as an ordered sequence of
+1 to 8 coherent teaching sections.
+
+Each section must contain:
+- title
+- content
+- question
+
+The question object must contain:
+- question
+- options
+- answer_index
+- explanation
+
+Teach one coherent concept, method, or related group
+of ideas in each section.
+
+Base the entire lesson on the supplied material.
+
+Simplify and reorganize the material without introducing
+unsupported facts, methods, or examples.
+
+Preserve the material's definitions, notation,
+terminology, worked examples, and conventions.
+
+Do not split a worked example halfway through.
+
+After each section, generate one knowledge-check question
+testing what the section has just explained.
+
+The question must have exactly four distinct options
+and one unambiguously correct answer.
+
+The answer_index must be the zero-based index
+of the correct option.
+
+The explanation must explain the correct answer clearly.
+
+Do not test knowledge introduced only in later sections.
+
+Use Markdown, mathematics, graphs, and language-learning
+annotations according to the general instructions.
+
+If the topic teaches a mathematical function or graph property,
+include an appropriate graph in the relevant section.
+
+After the lesson sections, generate 4 to 12 flashcards
+and 8 to 24 final multiple-choice questions.
+
+Use the complete lesson to construct them.
+
+Do not repeat the exact embedded knowledge-check questions
+in the final question bank.
+
+Every flashcard and final quiz question must be answerable
+from the source-grounded lesson or prerequisite topics.
+
+Return only the structured output defined by the schema:
+
+- lesson_sections
+- flashcards
+- question_bank
+
+Do not return a single Markdown lesson string.

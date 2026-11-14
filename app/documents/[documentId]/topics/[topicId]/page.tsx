@@ -18,9 +18,24 @@ type Data = {
     seconds_left: number
 }
 
+type LessonQuestion = {
+    question: string
+    options: string[]
+    answer_index: number
+    explanation: string
+}
+
+type LessonSection = {
+    title: string
+    content: string
+    question: LessonQuestion
+}
+
 type LessonData = {
-    name: string,
-    lesson: string | null,
+    name: string
+    lesson: string | null
+    lesson_sections: LessonSection[] | null
+    sections_completed: number
     read: boolean
 }
 
@@ -103,7 +118,6 @@ function StepBar({
     )
 }
 
-
 // Opens over the task, so the user can look something up without losing their place.
 function LessonPanel({
     lesson,
@@ -127,14 +141,13 @@ function LessonPanel({
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-6 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex-1 overflow-y-auto px-6 py-8 scrollbar-none [&::-webkit-scrollbar]:hidden">
                     <Lesson lesson={lesson} />
                 </div>
             </aside>
         </>
     )
 }
-
 
 function RestingPeriod({
     timeLeft,
@@ -276,8 +289,12 @@ export default function Topic() {
     const [questionResponse, setQuestionResponse] = useState<QuestionResponse>()
     const [selectedAnswer, setSelectedAnswer] = useState("")
 
-    const [lesson, setLesson] = useState<LessonData>()
+    const [lessonData, setLessonData] = useState<LessonData>()
     const [lessonOpen, setLessonOpen] = useState(false)
+
+    const currentSection = lessonData?.lesson_sections?.[lessonData.sections_completed];
+    const lessonContent = lessonData?.lesson ?? currentSection?.content;
+    const lessonQuestion = currentSection?.question;
 
     useEffect(() => {
         getLesson().then(getFlashcard)
@@ -438,7 +455,6 @@ export default function Topic() {
         setWaiting(false)
     }
 
-
     async function getQuestions() {
         try {
             const response = await fetch(
@@ -463,7 +479,6 @@ export default function Topic() {
         }
     }
 
-
     async function getLesson() {
         try {
             const response = await fetch(
@@ -475,9 +490,10 @@ export default function Topic() {
 
 
             const data = await response.json()
+            console.log("lesson response:", response.status, data)
 
             if (response.ok) {
-                setLesson(data)
+                setLessonData(data)
             }
             else {
                 setError(data.detail || "A server error occured.")
@@ -488,10 +504,9 @@ export default function Topic() {
         }
     }
 
-
     // The lesson closes straight away. If saving fails, it just opens by itself again on the next visit.
     async function readLesson() {
-        setLesson({ ...lesson!, read: true })
+        setLessonData({ ...lessonData!, read: true })
 
         try {
             await fetch(
@@ -507,7 +522,6 @@ export default function Topic() {
         }
     }
 
-
     async function getFlashcard() {
         try {
             const response = await fetch(
@@ -516,7 +530,6 @@ export default function Topic() {
                     credentials: "include"
                 }
             )
-
 
             if (response.ok) {
                 const json = await response.json() 
@@ -527,7 +540,6 @@ export default function Topic() {
 
                     return 
                 }
-
 
                 const responseState = json["state"]
                 
@@ -554,7 +566,6 @@ export default function Topic() {
         }
     }
 
-
     async function review(answer: string) {
         setRequestState("waiting")
 
@@ -573,7 +584,6 @@ export default function Topic() {
                 }
             )
 
-
             if (response.ok) {
                 await getFlashcard()
                 setCardState("hidden")
@@ -582,7 +592,6 @@ export default function Topic() {
                 setError("A server error occured.")
             }
 
-
             setRequestState("ready")
         }
         catch {
@@ -590,7 +599,6 @@ export default function Topic() {
             setRequestState("ready")
         }
     }
-
 
     async function askQuestion(prompt: string) {
         if (prompt.length < 5) {
@@ -603,7 +611,6 @@ export default function Topic() {
 
             return false
         }
-
 
         // Checked in the same order as the page picks what to show, so the help is about what is on screen.
         // The server uses the lesson when neither a flashcard nor a question is sent.
@@ -624,7 +631,6 @@ export default function Topic() {
             }
         }
         : {}
-
 
         try {
             const response = await fetch(
@@ -662,10 +668,8 @@ export default function Topic() {
         return false
     }
 
-
     // The lesson opens by itself until it has been read, and from the Lesson button after that.
-    const unreadLesson = lesson?.read ? undefined : lesson?.lesson
-
+    const unreadLesson = !lessonData?.read
 
     // 0 is the lesson, 1 the flashcards, 2 the quiz and 3 a finished topic.
     const step = unreadLesson ? 0 : state == "questions" ? 2 : state == "complete" ? 3 : 1
@@ -682,17 +686,32 @@ export default function Topic() {
                     step={step}
                     progress={progress}
                     documentId={documentId}
-                    onOpenLesson={lesson?.lesson && !unreadLesson ? () => setLessonOpen(true) : undefined}
+                    onOpenLesson={
+                        lessonData?.read &&
+                        (typeof lessonData.lesson === "string" ||
+                            (lessonData.lesson_sections?.length ?? 0) > 0)
+                            ? () => setLessonOpen(true)
+                            : undefined
+                    }
                     onNext={unreadLesson ? readLesson : undefined}
                     setConfirm={() => setConfirm("Are you sure you want to regenerate this topic?")}
                 />
 
                 <main className="flex-1 flex flex-col overflow-y-auto">
                     <div className="flex-1 w-full max-w-2xl mx-auto px-6 py-10 flex flex-col items-center justify-center">
-                        {unreadLesson ? (
-                            <div className="w-full text-[17px] sm:text-lg">
-                                <Lesson lesson={unreadLesson} />
-                            </div>
+                        {unreadLesson && lessonData ? (
+                            typeof lessonData.lesson === "string" ? (
+                                <div className="w-full text-[17px] sm:text-lg">
+                                    <Lesson lesson={lessonData.lesson} />
+                                </div>
+                            ) : (
+                                <div className="w-full text-[17px] sm:text-lg">
+                                    <Lesson 
+                                        lesson={lessonContent}
+                                        question={lessonQuestion}
+                                     />
+                                </div>       
+                            )
                         ) : currentCard ? (
                             <FlashcardTask
                                 card={currentCard}
@@ -717,11 +736,18 @@ export default function Topic() {
                     </div>
                 </main>
 
-                {lessonOpen && lesson?.lesson && (
-                    <LessonPanel
-                        lesson={lesson.lesson}
-                        onClose={() => setLessonOpen(false)}
-                    />
+                {lessonOpen && lessonData && (
+                    typeof lessonData.lesson === "string" ? (
+                        <LessonPanel
+                            lesson={lessonData.lesson}
+                            onClose={() => setLessonOpen(false)}
+                        />
+                    ) : lessonData.lesson_sections?.[0] ? (
+                        <LessonPanel
+                            lesson={lessonData.lesson_sections[0].content}
+                            onClose={() => setLessonOpen(false)}
+                        />
+                    ) : null
                 )}
 
                 {error && (

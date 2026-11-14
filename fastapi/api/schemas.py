@@ -62,7 +62,14 @@ class HelpPrompt(BaseModel):
         max_length = 10000
     )
 
-    # What the learner is looking at. The lesson is used when neither is sent.
+    # What the learner is looking at.
     flashcard: HelpFlashcard | None = None
     question: HelpQuestion | None = None
+    lesson_section_index: int | None = Field(
+        default=None,
+        ge=0
+    )
 
+class LessonAnswerRequest(BaseModel):
+    section_index: int = Field(ge=0)
+    selected_index: int = Field(ge=0, le=3)

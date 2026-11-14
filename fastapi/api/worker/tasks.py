@@ -24,7 +24,8 @@ def delete_old_tts():
 
             
 def add_topic_content(topic, content):
-    topic.lesson = content["lesson"]
+    topic.lesson_sections = content["lesson_sections"]
+    topic.lesson = None
 
     for flashcard_data in content["flashcards"]:
         topic.flashcards.append(

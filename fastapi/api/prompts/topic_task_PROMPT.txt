@@ -1,16 +1,99 @@
-Generate the lesson, flashcards, and multiple-choice questions for this one topic only:
+
+Generate interactive lesson sections, flashcards, and multiple-choice
+questions for this one topic only:
+
 {topic}
 
-The message above is the learner's request that the course was built from.
+The message above is the learner's original request that the course
+was built from.
 
 The full course outline, for context:
 {outline}
 
-The other topics are generated separately, so only cover this topic and do not
-teach or test the content of other topics except where this topic builds on it.
-Write the lesson first, from your own knowledge of the subject. Then write the
-flashcards and questions from the lesson.
-Pitch the content at the level of this topic's position in the outline. It can
-assume the learner has completed the earlier topics, but not the later ones.
-If the topic is about a mathematical function or its graph, such as a curve,
-a vertex, an intercept, or an asymptote, show it in a graph in the lesson.
+The other topics are generated separately. Only teach this topic.
+Do not teach or test material belonging to later topics.
+
+Assume the learner understands the earlier topics, but has not
+studied any of the later topics.
+
+INTERACTIVE LESSON
+
+Generate lesson_sections as an ordered sequence of short,
+self-contained teaching sections.
+
+Each section contains:
+- title: a short descriptive heading.
+- content: a clear Markdown explanation of one coherent concept,
+  skill, rule, method, or related group of ideas.
+- question: one multiple-choice knowledge check based on that
+  section's explanation.
+- options: exactly four distinct answer options.
+- answer_index: the zero-based index of the correct option.
+- explanation: clear feedback explaining the correct answer.
+
+Use between 1 and 8 sections, depending on the complexity of
+the topic. Do not create unnecessary sections just to increase
+the count.
+
+Arrange sections in the order a learner needs to understand them.
+
+Teach the concept before asking about it. Never test information
+that has not yet been explained in the current or earlier sections,
+except knowledge assumed from prerequisite topics.
+
+Every knowledge check must have exactly one correct answer.
+
+The knowledge check must test understanding, recognition, or
+application of what the student has just learned.
+
+Do not merely ask the student to repeat the section title.
+
+When a section contains a worked example, complete the example
+before asking a knowledge-check question. Test the method using
+a different example where appropriate.
+
+Avoid repeating the same question across sections.
+
+Write all section content from accurate subject knowledge,
+following the general content-generation instructions.
+
+MATHEMATICS AND GRAPHING
+
+If the topic teaches a mathematical function, its graph, a
+curve, vertex, intercept, asymptote, or other graph property,
+include a valid graph in the relevant section.
+
+Use the existing graph-block syntax and mathematical formatting
+rules from the general content-generation instructions.
+
+Place graphs and worked examples in the section where they are
+needed, not in a separate section at the end.
+
+FLASHCARDS AND FINAL QUESTIONS
+
+After generating all lesson sections, generate the flashcards
+and the separate final question bank.
+
+Create 4 to 12 flashcards and 8 to 24 final multiple-choice
+questions, according to the topic's scope and the general rules.
+
+Flashcards must test recall of facts, definitions, rules, methods,
+or vocabulary taught across the complete interactive lesson.
+
+Final quiz questions must test understanding or application of
+the complete topic.
+
+Do not reuse the exact embedded knowledge-check questions in
+the final question bank.
+
+Every flashcard and final quiz question must be answerable using
+the complete lesson and prerequisite topics.
+
+Use the required structured output schema.
+
+Return:
+- lesson_sections
+- flashcards
+- question_bank
+
+Do not return a single Markdown lesson string.

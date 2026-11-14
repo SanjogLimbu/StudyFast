@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 import json
+from .generation_schemas import * 
 
 from pypdf import PdfReader
 from docx import Document as DocxDocument
@@ -31,170 +32,6 @@ TOPIC_TASK_PROMPT = (PROMPTS_PATH / "topic_task_PROMPT.txt").read_text(encoding=
 
 HELP_RESPONSE = (PROMPTS_PATH / "help_response.txt").read_text(encoding="utf-8")
 
-# Rejected material has the title "Rejected" and no topics, so topics has no minimum.
-OUTLINE_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "title": {
-            "type": "string",
-            "maxLength": 100
-        },
-        "topics": {
-            "type": "array",
-            "maxItems": 100,
-            "items": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "sections": {
-                        "type": "array",
-                        "minItems": 1,
-                        "items": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                "required": [
-                    "name",
-                    "sections"
-                ],
-                "additionalProperties": False
-            }
-        }
-    },
-    "required": [
-        "title",
-        "topics"
-    ],
-    "additionalProperties": False
-}
-
-
-# Outline of a course generated from a prompt, which has no document sections to display.
-# A rejected prompt has the title "Rejected" and no topics, so topics has no minimum.
-OUTLINE_SCHEMA_PROMPT = {
-    "type": "object",
-    "properties": {
-        "title": {
-            "type": "string",
-            "maxLength": 100
-        },
-        "topics": {
-            "type": "array",
-            "maxItems": 100,
-            "items": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "name"
-                ],
-                "additionalProperties": False
-            }
-        }
-    },
-    "required": [
-        "title",
-        "topics"
-    ],
-    "additionalProperties": False
-}
-
-# The lesson is first so the model writes it before the flashcards and questions that are based on it.
-TOPIC_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "lesson": {
-            "type": "string"
-        },
-        "flashcards": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "front": {
-                        "type": "string"
-                    },
-                    "back": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "front",
-                    "back"
-                ],
-                "additionalProperties": False
-            },
-            "minItems": 4,
-            "maxItems": 12
-        },
-        "question_bank": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "question": {
-                        "type": "string"
-                    },
-                    "options": {
-                        "type": "array",
-                        "minItems": 4,
-                        "maxItems": 4,
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "answer": {
-                        "type": "string"
-                    },
-                    "difficulty": {
-                        "type": "string",
-                        "enum": [
-                            "easy",
-                            "medium",
-                            "hard"
-                        ]
-                    }
-                },
-                "required": [
-                    "question",
-                    "options",
-                    "answer",
-                    "difficulty"
-                ],
-                "additionalProperties": False
-            },
-            "minItems": 8,
-            "maxItems": 24
-        }
-    },
-    "required": [
-        "lesson",
-        "flashcards",
-        "question_bank"
-    ],
-    "additionalProperties": False
-}
-
-# The answer to a learner's question, shown as plain text in a notice.
-HELP_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "response": {
-            "type": "string"
-        }
-    },
-    "required": [
-        "response"
-    ],
-    "additionalProperties": False
-}
-
 # Matches [[native script|romanization]].
 ANNOTATION = re.compile(r"\[\[([^|\]]+)\|([^\]]+)\]\]")
 
@@ -219,7 +56,6 @@ CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]|(?<=[^\n\t])\t")
 
 ##
 
-# Raised when a file's text can't be extracted, so the upload is rejected.
 class UnreadableDocumentError(Exception):
     pass
 
@@ -308,6 +144,32 @@ def extract_text(file_path: Path) -> str:
     # Clean the text to save on context window and speed up processing time.
     return clean_text(text)[:MAX_TEXT_LENGTH]
 
+def topic_text_fields(content: dict) -> list[str]:
+    texts = []
+
+    for section in content["lesson_sections"]:
+        texts.extend([
+            section["title"],
+            section["content"],
+            section["question"]["question"],
+            section["question"]["explanation"],
+            *section["question"]["options"]
+        ])
+
+    for flashcard in content["flashcards"]:
+        texts.extend([
+            flashcard["front"],
+            flashcard["back"]
+        ])
+
+    for question in content["question_bank"]:
+        texts.extend([
+            question["question"],
+            question["answer"],
+            *question["options"]
+        ])
+
+    return texts
 
 def split_into_sections(text: str) -> list[str]:
     sections = []
@@ -328,7 +190,6 @@ def split_into_sections(text: str) -> list[str]:
 
 
     return sections
-
 
 def generate(instructions, material: str, task: str, schema_name: str, schema: dict) -> dict:
     response = client.responses.create(
@@ -360,7 +221,6 @@ def generate(instructions, material: str, task: str, schema_name: str, schema: d
 
     return json.loads(response.output_text)
 
-
 def generate_outline_from_prompt(prompt: str) -> dict:
     outline = generate(content_generation_PROMPT, prompt, OUTLINE_TASK_PROMPT, "course_outline", OUTLINE_SCHEMA_PROMPT)
 
@@ -374,7 +234,6 @@ def generate_outline_from_prompt(prompt: str) -> dict:
             for topic in outline["topics"]
         ]
     }
-
 
 def generate_outline(text: str) -> dict:
     if (not text.strip()):
@@ -428,10 +287,8 @@ def generate_outline(text: str) -> dict:
         "topics": topics
     }
 
-
 def without_spaces(text: str) -> str:
     return "".join(text.split()).casefold()
-
 
 # A question that quotes one form of its answer, such as How is "neko" written?, gives the answer
 # away when the options show both forms. Its options then keep only the form being asked for.
@@ -442,7 +299,6 @@ def hide_quoted_form(question: dict):
     # A plain answer shows only one form already.
     if (not ANNOTATION.search(answer)):
         return
-
 
     # The quote gives the reading and the options keep the native script, or the other way round.
     for given, kept in [(r"\2", r"\1"), (r"\1", r"\2")]:
@@ -463,6 +319,7 @@ def hide_quoted_form(question: dict):
             ]
 
             question["answer"] = ANNOTATION.sub(kept, answer)
+
             return
 
 
@@ -484,7 +341,6 @@ def hide_quoted_reading(text: str, answer: str) -> str:
 
     return QUOTED.sub(hide, text)
 
-
 # The learner never sees the brackets, so target-language text inside a sentence looks like the
 # English around it. Each run of annotations gets quotation marks, unless it already has them.
 def quote_annotations(text: str) -> str:
@@ -497,9 +353,7 @@ def quote_annotations(text: str) -> str:
         if (run is None):
             return match[0]
 
-
         return opening + run + closing
-
 
     lines = []
 
@@ -510,47 +364,23 @@ def quote_annotations(text: str) -> str:
         if ("|" not in rest and any(character.isalpha() for character in rest)):
             line = QUOTED_OR_RUN.sub(quote, line)
 
-
         lines.append(line)
-
 
     return "\n".join(lines)
 
-
-# Raising makes the job retry, so content with a broken LaTeX command is generated again instead of saved.
 def reject_control_characters(content: dict):
-    texts = [content["lesson"]]
+    for text in topic_text_fields(content):
+        if CONTROL.search(text):
+            raise ValueError(
+                "Generated content contains a control character."
+            )
 
-    for flashcard in content["flashcards"]:
-        texts += [flashcard["front"], flashcard["back"]]
-
-
-    for question in content["question_bank"]:
-        texts += [question["question"], question["answer"], *question["options"]]
-
-
-    for text in texts:
-        if (CONTROL.search(text)):
-            raise ValueError("The generated content contains a control character.")
-
-
-# The model sometimes annotates one word of a sentence and leaves its neighbours in native script.
-# Raising makes the job retry, so the topic is generated again instead of saved.
 def reject_mixed_scripts(content: dict):
-    texts = [content["lesson"]]
-
-    for flashcard in content["flashcards"]:
-        texts += [flashcard["front"], flashcard["back"]]
-
-
-    for question in content["question_bank"]:
-        texts += [question["question"], question["answer"], *question["options"]]
-
-
-    for text in texts:
-        if (MIXED.search(text)):
-            raise ValueError("The generated content mixes annotated and bare native script.")
-
+    for text in topic_text_fields(content):
+        if MIXED.search(text):
+            raise ValueError(
+                "Generated content mixes annotated and bare native script."
+            )
 
 def generate_topic(material: str, topic: str, outline: str, source: str) -> dict:
     chosen_prompt = TOPIC_TASK 
@@ -559,7 +389,6 @@ def generate_topic(material: str, topic: str, outline: str, source: str) -> dict
     if (source == "prompt"):
         chosen_prompt = TOPIC_TASK_PROMPT
         chosen_instruct = content_generation_PROMPT
-
 
     task = chosen_prompt.format(
         topic=topic,
@@ -570,12 +399,40 @@ def generate_topic(material: str, topic: str, outline: str, source: str) -> dict
     reject_control_characters(content)
     reject_mixed_scripts(content)
 
-    content["lesson"] = quote_annotations(content["lesson"])
+    for section in content["lesson_sections"]:
+        section["content"] = quote_annotations(section["content"])
+        section_question = section["question"]
+        
+        correct_answer = section_question["options"][
+            section_question["answer_index"]
+        ]
+
+        temporary_question = {
+            "question": quote_annotations(
+                section_question["question"]
+            ),
+            "options": list(section_question["options"]),
+            "answer": correct_answer
+        }
+
+        hide_quoted_form(temporary_question)
+
+        temporary_question["question"] = hide_quoted_reading(
+            temporary_question["question"],
+            temporary_question["answer"]
+        )
+
+        section_question["question"] = temporary_question[
+            "question"
+        ]
+
+        section_question["options"] = temporary_question[
+            "options"
+        ]
 
     for flashcard in content["flashcards"]:
         flashcard["front"] = hide_quoted_reading(quote_annotations(flashcard["front"]), flashcard["back"])
         flashcard["back"] = quote_annotations(flashcard["back"])
-
 
     for question in content["question_bank"]:
         # Options stand alone, so only the question itself is changed.
@@ -584,7 +441,6 @@ def generate_topic(material: str, topic: str, outline: str, source: str) -> dict
         hide_quoted_form(question)
 
         question["question"] = hide_quoted_reading(question["question"], question["answer"])
-
 
     return content
 

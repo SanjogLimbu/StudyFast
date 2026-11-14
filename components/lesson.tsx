@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react"
 import Markdown, { type ExtraProps } from "react-markdown"
+import { useState } from "react"
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
@@ -18,6 +19,13 @@ type Node = {
     position?: { start: { offset?: number } }
 }
 
+type LessonQuestion = {
+    question: string
+    options: string[]
+    answer_index: number
+    explanation: string
+}
+
 //
 
 function addDisplayMath(node: Node, file: { value: unknown }) {
@@ -29,7 +37,6 @@ function addDisplayMath(node: Node, file: { value: unknown }) {
     node.children?.forEach((child) => addDisplayMath(child, file))
 }
 
-
 const remarkDisplayMath = () => addDisplayMath
 
 function addRuby(node: Node) {
@@ -38,14 +45,12 @@ function addRuby(node: Node) {
         return
     }
 
-
     node.children = node.children.flatMap((child) => {
         if (child.type != "text") {
             addRuby(child)
 
             return [child]
         }
-
 
         const text = child.value!
         const parts: Node[] = []
@@ -93,7 +98,6 @@ function addRuby(node: Node) {
     })
 }
 
-
 const rehypeRuby = () => addRuby
 
 function escapeAnnotations(lesson: string) {
@@ -118,16 +122,102 @@ function CodeBlock({ node, children }: ComponentProps<"pre"> & ExtraProps) {
 
 //
 
-export default function Lesson({ lesson }: { lesson: string }) {
+function KnowledgeCheck({
+    question
+}: {
+    question: LessonQuestion;
+}) {
+    const [selectedAnswer, setSelectedAnswer] =
+        useState<number | null>(null);
+
+    const answered = selectedAnswer !== null;
+
+    const isCorrect =
+        selectedAnswer === question.answer_index;
+
+    return (
+        <div className="mt-10 rounded-xl border border-border bg-surface p-6 space-y-5">
+            <div>
+                <p className="text-sm font-semibold text-primary mb-2">
+                    Knowledge Check
+                </p>
+
+                <h3 className="text-lg font-semibold">
+                    {question.question}
+                </h3>
+            </div>
+
+            <div className="flex flex-col gap-3">
+                {question.options.map((option, index) => {
+                    const isSelected = selectedAnswer === index;
+
+                    return (
+                        <button
+                            key={index}
+                            type="button"
+                            disabled={answered}
+                            onClick={() => setSelectedAnswer(index)}
+                            className={`
+                                w-full rounded-lg border p-4 text-left
+                                transition-colors
+                                ${isSelected
+                                    ? "border-primary bg-primary/10"
+                                    : "border-border hover:bg-surface-hover"
+                                }
+                                disabled:cursor-default
+                            `}
+                        >
+                            <span className="font-medium mr-3">
+                                {String.fromCharCode(65 + index)}.
+                            </span>
+
+                            {option}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {answered && (
+                <div className="rounded-lg bg-surface-secondary p-4 space-y-2">
+                    <p className={`font-semibold ${
+                        isCorrect ? "text-success" : "text-red-500"
+                    }`}>
+                        {isCorrect ? "Correct!" : "Not quite!"}
+                    </p>
+
+                    <p className="text-sm">
+                        {question.explanation}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function Lesson(
+{ 
+    lesson,
+    question
+}: { 
+    lesson: string 
+    question?: LessonQuestion
+}) {
     return (
         <div className="lesson">
-            <Markdown
+            {<Markdown
                 remarkPlugins={[remarkGfm, remarkMath, remarkDisplayMath]}
                 rehypePlugins={[rehypeRuby, rehypeKatex]}
                 components={{ pre: CodeBlock }}
             >
                 {escapeAnnotations(lesson)}
-            </Markdown>
+            </Markdown>}
+
+            {question && (
+                <KnowledgeCheck
+                    key={question.question}
+                    question={question}
+                />
+            )}
         </div>
     )
 }

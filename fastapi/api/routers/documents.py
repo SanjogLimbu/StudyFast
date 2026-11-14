@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 
 from database import get_db
 from models import Document, User, Topic, TopicMastery
-from schemas import PromptRequest, HelpPrompt, DocumentOrder
+from schemas import PromptRequest, HelpPrompt, DocumentOrder, LessonAnswerRequest
 from routers.auth import get_current_user
 from services.document_processing import UPLOAD_PATH, UnreadableDocumentError, extract_text, generate_help_response
 
@@ -46,7 +46,6 @@ def uploads_today(user):
 
     return user.uploads
 
-
 def prompts_today(user):
     today = datetime.now(timezone.utc).date()
 
@@ -55,7 +54,6 @@ def prompts_today(user):
 
 
     return user.prompts
-
 
 def get_topics_and_document_mastery(current_user, document):
     topics = []
@@ -94,7 +92,6 @@ def get_topics_and_document_mastery(current_user, document):
 
 
     return topics, document_mastery
-    
 
 def generate_topic_content(
     document_id: int,
@@ -215,7 +212,6 @@ def prompt(
             interval=[10, 30, 60]
         )
     )
-
 
 @router.post(
     "/upload",
@@ -367,7 +363,6 @@ def upload(
         )
     )
 
-
 @router.get("")
 def get_documents(
     current_user: User = Depends(get_current_user),
@@ -415,7 +410,6 @@ def get_documents(
 
     return documents_data 
 
-
 @router.put("/order")
 def order_documents(
     order: DocumentOrder,
@@ -437,7 +431,6 @@ def order_documents(
 
 
     db.commit()
-
 
 @router.get("/{document_id}")
 def get_document(
@@ -474,7 +467,6 @@ def get_document(
         "mastery": document_mastery
     }
 
-
 @router.get("/{document_id}/topics/{topic_id}/lesson")
 def get_lesson(
     document_id: int,
@@ -488,6 +480,7 @@ def get_lesson(
         .where(
             Topic.id == topic_id,
             Topic.document_id == document_id,
+            Topic.content_status == "ready",
             Document.user_id == current_user.id
         )
     )
@@ -500,7 +493,6 @@ def get_lesson(
             detail="Topic not found."
         )
 
-
     topic_mastery = db.scalar(
         select(TopicMastery)
         .where(
@@ -512,9 +504,17 @@ def get_lesson(
     return {
         "name": topic.name,
         "lesson": topic.lesson,
-        "read": topic_mastery is not None and topic_mastery.lesson_read
+        "lesson_sections": topic.lesson_sections,
+        "read": (
+            topic_mastery is not None
+            and topic_mastery.lesson_read
+        ),
+        "sections_completed": (
+            topic_mastery.lesson_sections_completed
+            if topic_mastery is not None
+            else 0
+        )
     }
-
 
 @router.post("/{document_id}/topics/{topic_id}/lesson/read")
 def read_lesson(
@@ -543,11 +543,31 @@ def read_lesson(
             detail="Topic not found."
         )
 
+    # We need to make sure players can't skip questions using the old lesson read backwards compatible endpoint
+    topic = db.scalar(
+        select(Topic)
+        .join(Document)
+        .where(
+            Topic.id == topic_id,
+            Topic.document_id == document_id,
+            Document.user_id == current_user.id
+        )
+    )
+
+    if not topic:
+        raise HTTPException(
+            status_code=404,
+            detail="Topic not found."
+        )
+
+    if not topic.lesson:
+        raise HTTPException(
+            status_code=409,
+            detail="Complete the lesson first."
+        )
 
     topic_mastery.lesson_read = True
-
     db.commit()
-
 
 @router.delete("/{document_id}")
 def deleteDocument(
@@ -575,7 +595,6 @@ def deleteDocument(
     db.delete(document)
     db.commit()
 
-
 @router.post("/{document_id}/topics/{topic_id}/help")
 def help(
     document_id: int,
@@ -591,7 +610,6 @@ def help(
             status_code=429,
             detail="You have reached your daily question prompt limit."
         )
-
     
     query = (
         select(Topic)
@@ -611,6 +629,7 @@ def help(
             detail="Topic not found."
         )
 
+    context = "Error has occured."
 
     # The answer is about whatever the learner has on screen.
     if (request.flashcard):
@@ -633,8 +652,33 @@ def help(
             context += f"\n\nThe learner has answered it. The correct answer is: {request.question.answer}"
 
     else:
-        context = "The lesson the learner is reading:\n" + topic.lesson
+        if topic.lesson:
+            # We have to support old lesson system
+            context = "The lesson the learner is reading:\n" + topic.lesson
 
+        elif topic.lesson_sections:
+            sections = topic.lesson_sections
+            index = request.lesson_section_index
+
+            if index is None:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Lesson section index is required."
+                )
+
+            if index >= len(sections):
+                raise HTTPException(
+                    status_code=422,
+                    detail="Invalid lesson section."
+                )
+
+
+            question = sections[index]["question"]
+            context = (
+                "The lesson section the learner is reading:\n" 
+                + sections[index]["content"] 
+                + "\n\nAnd the current knowledge check is:\n"+ question["question"]
+            )
 
     try:
         response = generate_help_response(request.user_prompt, context)
@@ -645,14 +689,12 @@ def help(
             detail="The answer took too long. Please try again."
         )
 
-
-    # Only answered prompts count towards the daily limit.
+    # Only answered prompts should count towards the daily limit otherwise it feels unfair.
     user.last_prompt = datetime.now(timezone.utc)
     user.prompts = user_prompts_today + 1
     db.commit()
 
     return response
-
 
 @router.post("/{document_id}/topics/{topic_id}/regenerate")
 def regenerate(
@@ -669,13 +711,11 @@ def regenerate(
         )
     )
 
-
     if (document is None):
         raise HTTPException(
             status_code=403,
             detail="Document not found."
         )
-
 
     # Lock the topic so a double click can't clear and queue it twice.
     topic = db.scalar(
@@ -687,13 +727,11 @@ def regenerate(
         .with_for_update()
     )
 
-
     if (topic is None):
         raise HTTPException(
             status_code=403,
             detail="Topic not found."
         )
-
 
     # Clearing the content while the worker is writing it would mix old and new content.
     if (topic.content_status in ["pending", "processing"]):
@@ -701,7 +739,6 @@ def regenerate(
             status_code=409,
             detail="Topic is already generating."
         )
-
 
     # Deleting the flashcards also deletes their review progress, so the topic's mastery starts over.
     topic.lesson = None
@@ -719,5 +756,120 @@ def regenerate(
 
 
     db.flush()
-
     generate_topic_content(document_id, topic_id, user, db)
+
+@router.post(
+    "/{document_id}/topics/{topic_id}/lesson/answer"
+)
+def answer_lesson_section(
+    document_id: int,
+    topic_id: int,
+    answer: LessonAnswerRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    mastery = db.scalar(
+        select(TopicMastery)
+        .join(
+            Topic,
+            Topic.id == TopicMastery.topic_id
+        )
+        .join(
+            Document,
+            Document.id == Topic.document_id
+        )
+        .where(
+            Topic.id == topic_id,
+            Topic.document_id == document_id,
+            Document.user_id == current_user.id,
+            TopicMastery.user_id == current_user.id
+        )
+        .with_for_update(of=TopicMastery)
+    )
+
+    if mastery is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Topic not found."
+        )
+
+    elif mastery.status == "locked":
+        raise HTTPException(
+            status_code=403,
+            detail="Topic is locked."
+        )
+
+    topic = db.get(Topic, topic_id)
+
+    if not topic:
+        raise HTTPException(
+            status_code=404,
+            detail="Topic not found."
+        )
+
+    elif topic.content_status != "ready":
+        raise HTTPException(
+            status_code=409,
+            detail="Topic is not ready."
+        )
+
+    sections = topic.lesson_sections
+
+    if not sections:
+        raise HTTPException(
+            status_code=409,
+            detail="No interactive lesson available."
+        )
+
+    total = len(sections)
+    current = mastery.lesson_sections_completed
+    requested = answer.section_index
+
+    if requested < current:
+        section = sections[requested]
+        question = section["question"]
+
+        return {
+            "already_completed": True,
+            "correct": (
+                answer.selected_index
+                == question["answer_index"]
+            ),
+            "correct_index": question["answer_index"],
+            "explanation": question["explanation"],
+            "sections_completed": current,
+            "lesson_complete": mastery.lesson_read
+        }
+
+    elif requested != current:
+        raise HTTPException(
+            status_code=409,
+            detail="Section is not currently available."
+        )
+
+    elif requested >= total:
+        raise HTTPException(
+            status_code=409,
+            detail="Lesson is already complete."
+        )
+
+    section = sections[requested]
+    question = section["question"]
+
+    correct_index = question["answer_index"]
+    is_correct = answer.selected_index == correct_index
+    mastery.lesson_sections_completed += 1
+
+    if mastery.lesson_sections_completed == total:
+        mastery.lesson_read = True
+
+    db.commit()
+
+    return {
+        "already_completed": False,
+        "correct": is_correct,
+        "correct_index": correct_index,
+        "explanation": question["explanation"],
+        "sections_completed": mastery.lesson_sections_completed,
+        "lesson_complete": mastery.lesson_read
+    }

@@ -52,6 +52,7 @@ function StepBar({
     step,
     progress,
     documentId,
+    oldLesson,
     onOpenLesson,
     onNext,
     setConfirm
@@ -59,6 +60,7 @@ function StepBar({
     step: number
     progress: number
     documentId: string
+    oldLesson: string
     onOpenLesson?: () => void
     onNext?: () => void
     setConfirm: () => void 
@@ -101,7 +103,7 @@ function StepBar({
 
                 {onNext && (
                     <button className="btn btn-primary h-9 px-4 text-sm shrink-0" onClick={onNext}>
-                        Next
+                        {oldLesson ? "Next" : "Skip"}
                     </button>
                 )}
 
@@ -276,6 +278,7 @@ export default function Topic() {
     const [requestState, setRequestState] = useState("ready")
 
     const [confirm, setConfirm] = useState("")
+    const [confirmSkip, setConfirmSkip] = useState("")
     const [error, setError] = useState("")
     const [promptResponse, setPromptResponse] = useState<{ question: string, answer: string }>()
     const [waiting, setWaiting] = useState(false)
@@ -294,8 +297,7 @@ export default function Topic() {
     const [completedSections, setCompletedSections] = useState(0)
 
     const currentSection = lessonData?.lesson_sections?.[completedSections]
-    const lessonContent = lessonData?.lesson_sections?
-        .slice(0, completedSections + 1)
+    const lessonContent = lessonData?.lesson_sections?.slice(0, completedSections + 1)
         .map(section => section.content)
         .join("\n\n") ?? ""
 
@@ -507,8 +509,14 @@ export default function Topic() {
         }
     }
 
-    // The lesson closes straight away. If saving fails, it just opens by itself again on the next visit.
     async function readLesson() {
+        if (!lessonData?.lesson && !confirmSkip) {
+            setConfirmSkip("Are you sure you want to skip?")
+
+            return 
+        }
+
+
         setLessonData({ ...lessonData!, read: true })
 
         try {
@@ -521,7 +529,7 @@ export default function Topic() {
             )
         }
         catch {
-
+            setError("A network error occured.")
         }
     }
 
@@ -689,6 +697,7 @@ export default function Topic() {
                     step={step}
                     progress={progress}
                     documentId={documentId}
+                    oldLesson={lessonData?.lesson}
                     onOpenLesson={
                         lessonData?.read &&
                         (typeof lessonData.lesson === "string" ||
@@ -697,7 +706,7 @@ export default function Topic() {
                             : undefined
                     }
                     onNext={unreadLesson ? readLesson : undefined}
-                    setConfirm={() => setConfirm("Are you sure you want to regenerate this topic?")}
+                    setConfirm={() => setConfirmSkip("Are you sure you want to regenerate this topic?")}
                 />
 
                 <main className="flex-1 flex flex-col overflow-y-auto">
@@ -772,6 +781,20 @@ export default function Topic() {
                         onYes={regenerate}
                         onNo={() => {
                             setConfirm("")
+                        }}
+                    />
+                )}
+
+                {confirmSkip && (
+                    <ConfirmationPrompt 
+                        message={confirmSkip}
+                        yesText="Yes"
+                        onYes={() => {
+                            readLesson()
+                            setConfirmSkip("")
+                        }}
+                        onNo={() => {
+                            setConfirmSkip("")
                         }}
                     />
                 )}

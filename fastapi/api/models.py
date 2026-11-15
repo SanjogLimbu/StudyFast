@@ -505,13 +505,11 @@ class Question(Base):
         nullable=False
     )
 
-
     # Difficulties: easy, medium, hard
     difficulty: Mapped[str] = mapped_column(
         String(20),
         nullable=False
     )
-
 
     # Topic -< Many Question
     topic: Mapped["Topic"] = relationship(

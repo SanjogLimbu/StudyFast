@@ -607,23 +607,7 @@ def read_lesson(
             status_code=404,
             detail="Topic not found."
         )
-
-    # We need to make sure players can't skip questions using the old lesson read backwards compatible endpoint
-    topic = db.scalar(
-        select(Topic)
-        .join(Document)
-        .where(
-            Topic.id == topic_id,
-            Topic.document_id == document_id,
-            Document.user_id == current_user.id
-        )
-    )
-
-    if topic and not topic.lesson:
-        raise HTTPException(
-            status_code=409,
-            detail="Complete the lesson first."
-        )
+    
 
     topic_mastery.lesson_read = True
     db.commit()

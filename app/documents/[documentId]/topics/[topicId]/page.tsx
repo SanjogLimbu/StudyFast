@@ -291,10 +291,13 @@ export default function Topic() {
 
     const [lessonData, setLessonData] = useState<LessonData>()
     const [lessonOpen, setLessonOpen] = useState(false)
+    const [completedSections, setCompletedSections] = useState(0)
 
-    const currentSection = lessonData?.lesson_sections?.[lessonData.sections_completed];
-    const lessonContent = lessonData?.lesson ?? currentSection?.content;
-    const lessonQuestion = currentSection?.question;
+    const currentSection = lessonData?.lesson_sections?.[completedSections]
+    const lessonContent = lessonData?.lesson_sections?
+        .slice(0, completedSections + 1)
+        .map(section => section.content)
+        .join("\n\n") ?? ""
 
     useEffect(() => {
         getLesson().then(getFlashcard)
@@ -490,10 +493,10 @@ export default function Topic() {
 
 
             const data = await response.json()
-            console.log("lesson response:", response.status, data)
 
             if (response.ok) {
                 setLessonData(data)
+                setCompletedSections(data.sections_completed)
             }
             else {
                 setError(data.detail || "A server error occured.")
@@ -708,7 +711,12 @@ export default function Topic() {
                                 <div className="w-full text-[17px] sm:text-lg">
                                     <Lesson 
                                         lesson={lessonContent}
-                                        question={lessonQuestion}
+                                        question={currentSection?.question}
+                                        documentId={documentId}
+                                        topicId={topicId}
+                                        setError={setError}
+                                        completedSections={completedSections}
+                                        setCompletedSections={setCompletedSections}
                                      />
                                 </div>       
                             )

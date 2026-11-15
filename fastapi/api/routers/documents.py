@@ -458,7 +458,6 @@ def get_document(
             detail="Document not found."
         )
 
-
     topics, document_mastery = get_topics_and_document_mastery(current_user, document)
 
     return {
@@ -516,10 +515,76 @@ def get_lesson(
         )
     }
 
+@router.post("/{document_id}/topics/{topic_id}/lesson/answer")
+def answer_lesson(
+    document_id: int,
+    topic_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = (
+        select(TopicMastery)
+        .join(Topic)
+        .join(Document)
+        .where(
+            Topic.id == topic_id,
+            Topic.document_id == document_id,
+            Document.user_id == current_user.id,
+            TopicMastery.user_id == current_user.id
+        )
+    )
+
+    topic_mastery = db.scalar(query)
+
+    if (topic_mastery is None):
+        raise HTTPException(
+            status_code=404,
+            detail="Topic not found."
+        )
+
+    topic = db.scalar(
+        select(Topic)
+        .join(Document)
+        .where(
+            Topic.id == topic_id, 
+            Topic.document_id == document_id, 
+            Document.user_id == current_user.id
+        )
+    )
+
+    if (topic is None):
+        raise HTTPException(
+            status_code=404,
+            detail="Topic not found."
+        )
+    
+    if not topic.lesson_sections:
+        raise HTTPException(
+            status_code=409,
+            detail="Interactive lesson unavailable."
+        )
+
+    sections = topic.lesson_sections
+    section_length = len(sections)
+    
+    if topic_mastery.lesson_sections_completed >= section_length:
+        raise HTTPException(
+            status_code=409,
+            detail="Lesson is finished."
+        )
+
+    topic_mastery.lesson_sections_completed += 1 
+
+    if topic_mastery.lesson_sections_completed == section_length:
+        topic_mastery.lesson_read = True
+    
+    db.commit()
+
 @router.post("/{document_id}/topics/{topic_id}/lesson/read")
 def read_lesson(
     document_id: int,
     topic_id: int,
+    request: LessonAnswerRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -554,13 +619,7 @@ def read_lesson(
         )
     )
 
-    if not topic:
-        raise HTTPException(
-            status_code=404,
-            detail="Topic not found."
-        )
-
-    if not topic.lesson:
+    if topic and not topic.lesson:
         raise HTTPException(
             status_code=409,
             detail="Complete the lesson first."
@@ -757,119 +816,3 @@ def regenerate(
 
     db.flush()
     generate_topic_content(document_id, topic_id, user, db)
-
-@router.post(
-    "/{document_id}/topics/{topic_id}/lesson/answer"
-)
-def answer_lesson_section(
-    document_id: int,
-    topic_id: int,
-    answer: LessonAnswerRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    mastery = db.scalar(
-        select(TopicMastery)
-        .join(
-            Topic,
-            Topic.id == TopicMastery.topic_id
-        )
-        .join(
-            Document,
-            Document.id == Topic.document_id
-        )
-        .where(
-            Topic.id == topic_id,
-            Topic.document_id == document_id,
-            Document.user_id == current_user.id,
-            TopicMastery.user_id == current_user.id
-        )
-        .with_for_update(of=TopicMastery)
-    )
-
-    if mastery is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Topic not found."
-        )
-
-    elif mastery.status == "locked":
-        raise HTTPException(
-            status_code=403,
-            detail="Topic is locked."
-        )
-
-    topic = db.get(Topic, topic_id)
-
-    if not topic:
-        raise HTTPException(
-            status_code=404,
-            detail="Topic not found."
-        )
-
-    elif topic.content_status != "ready":
-        raise HTTPException(
-            status_code=409,
-            detail="Topic is not ready."
-        )
-
-    sections = topic.lesson_sections
-
-    if not sections:
-        raise HTTPException(
-            status_code=409,
-            detail="No interactive lesson available."
-        )
-
-    total = len(sections)
-    current = mastery.lesson_sections_completed
-    requested = answer.section_index
-
-    if requested < current:
-        section = sections[requested]
-        question = section["question"]
-
-        return {
-            "already_completed": True,
-            "correct": (
-                answer.selected_index
-                == question["answer_index"]
-            ),
-            "correct_index": question["answer_index"],
-            "explanation": question["explanation"],
-            "sections_completed": current,
-            "lesson_complete": mastery.lesson_read
-        }
-
-    elif requested != current:
-        raise HTTPException(
-            status_code=409,
-            detail="Section is not currently available."
-        )
-
-    elif requested >= total:
-        raise HTTPException(
-            status_code=409,
-            detail="Lesson is already complete."
-        )
-
-    section = sections[requested]
-    question = section["question"]
-
-    correct_index = question["answer_index"]
-    is_correct = answer.selected_index == correct_index
-    mastery.lesson_sections_completed += 1
-
-    if mastery.lesson_sections_completed == total:
-        mastery.lesson_read = True
-
-    db.commit()
-
-    return {
-        "already_completed": False,
-        "correct": is_correct,
-        "correct_index": correct_index,
-        "explanation": question["explanation"],
-        "sections_completed": mastery.lesson_sections_completed,
-        "lesson_complete": mastery.lesson_read
-    }

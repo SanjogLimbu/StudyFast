@@ -40,7 +40,6 @@ function addDisplayMath(node: Node, file: { value: unknown }) {
 const remarkDisplayMath = () => addDisplayMath
 
 function addRuby(node: Node) {
-    // Code and maths are left alone.
     if (!node.children || node.tagName == "code") {
         return
     }
@@ -122,18 +121,98 @@ function CodeBlock({ node, children }: ComponentProps<"pre"> & ExtraProps) {
 
 //
 
+function LessonMarkdown({ content }: { content: string }) {
+    return (
+        <Markdown
+            remarkPlugins={[
+                remarkGfm,
+                remarkMath,
+                remarkDisplayMath
+            ]}
+            rehypePlugins={[
+                rehypeRuby,
+                rehypeKatex
+            ]}
+            components={{ pre: CodeBlock }}
+        >
+            {escapeAnnotations(content)}
+        </Markdown>
+    )
+}
+
 function KnowledgeCheck({
-    question
+    question,
+    documentId,
+    topicId,
+    setError,
+    completedSections,
+    setCompletedSections
 }: {
     question: LessonQuestion;
+    documentId: number, 
+    topicId: number,
+    setError: React.Dispatch<React.SetStateAction<string>>,
+    completedSections: number,
+    setCompletedSections: React.Dispatch<React.SetStateAction<number>>
 }) {
-    const [selectedAnswer, setSelectedAnswer] =
-        useState<number | null>(null);
+    const [waiting, setWaiting] = useState(false)
+    const [canSkip, setCanSkip] = useState(false)
+    const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+    const answered = selectedAnswer !== null
+    const isCorrect = selectedAnswer === question.answer_index
 
-    const answered = selectedAnswer !== null;
+    async function answerQuestion(selectedAnswerIndex: number) {
+        if (waiting) {
+            return 
+        }
 
-    const isCorrect =
-        selectedAnswer === question.answer_index;
+
+        if (canSkip) {
+            setCompletedSections(completedSections + 1)
+            setCanSkip(false)
+
+            return 
+        }
+
+
+        setWaiting(true)
+        setSelectedAnswer(selectedAnswerIndex)
+
+        const isCorrect = selectedAnswerIndex === question.answer_index
+
+        if (isCorrect) {
+            new Audio("/sfx/question_correct.mp3").play()
+        } 
+        else {
+            new Audio("/sfx/question_wrong.mp3").play()
+        }
+
+
+        try {
+            const response = await fetch(
+                `/api/documents/${documentId}/topics/${topicId}/lesson/answer`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                }
+            )
+
+
+            if (response.ok) {
+                setCanSkip(true)
+            } 
+            else {
+                const data = await response.json()
+                setError(data.detail)
+            }
+        } 
+        catch {
+            setError("A network error occured.")
+        }
+
+
+        setWaiting(false)
+    }
 
     return (
         <div className="mt-10 rounded-xl border border-border bg-surface p-6 space-y-5">
@@ -143,37 +222,44 @@ function KnowledgeCheck({
                 </p>
 
                 <h3 className="text-lg font-semibold">
-                    {question.question}
+                    <LessonMarkdown content={question.question}/>
                 </h3>
             </div>
 
             <div className="flex flex-col gap-3">
                 {question.options.map((option, index) => {
-                    const isSelected = selectedAnswer === index;
+                    const isSelected = selectedAnswer === index
+                    const isCorrect = index === question.answer_index
+
+                    // Once answered, only show the selected and correct answers.
+                    if (answered && !isSelected && !isCorrect) {
+                        return null
+                    }
 
                     return (
                         <button
                             key={index}
                             type="button"
-                            disabled={answered}
-                            onClick={() => setSelectedAnswer(index)}
+                            onClick={() => answerQuestion(index)}
+                            disabled={answered && !canSkip}
                             className={`
                                 w-full rounded-lg border p-4 text-left
-                                transition-colors
-                                ${isSelected
-                                    ? "border-primary bg-primary/10"
-                                    : "border-border hover:bg-surface-hover"
+                                transition-colors cursor-pointer
+                                ${answered && isCorrect
+                                    ? "border-green-500 bg-green-500/10 text-green-500"
+                                    : answered && isSelected
+                                        ? "border-red-500 bg-red-500/10 text-red-500"
+                                        : "border-border hover:bg-surface-hover"
                                 }
-                                disabled:cursor-default
                             `}
                         >
                             <span className="font-medium mr-3">
                                 {String.fromCharCode(65 + index)}.
                             </span>
 
-                            {option}
+                            <LessonMarkdown content={option} />
                         </button>
-                    );
+                    )
                 })}
             </div>
 
@@ -185,9 +271,7 @@ function KnowledgeCheck({
                         {isCorrect ? "Correct!" : "Not quite!"}
                     </p>
 
-                    <p className="text-sm">
-                        {question.explanation}
-                    </p>
+                    <LessonMarkdown content={question.explanation}/>
                 </div>
             )}
         </div>
@@ -197,25 +281,34 @@ function KnowledgeCheck({
 export default function Lesson(
 { 
     lesson,
-    question
+    question,
+    documentId, 
+    topicId,
+    setError,
+    completedSections,
+    setCompletedSections
 }: { 
     lesson: string 
     question?: LessonQuestion
+    documentId?: string 
+    topicId?: string
+    setError?: React.Dispatch<React.SetStateAction<string>>,
+    completedSections: number,
+    setCompletedSections: React.Dispatch<React.SetStateAction<number>>
 }) {
     return (
         <div className="lesson">
-            {<Markdown
-                remarkPlugins={[remarkGfm, remarkMath, remarkDisplayMath]}
-                rehypePlugins={[rehypeRuby, rehypeKatex]}
-                components={{ pre: CodeBlock }}
-            >
-                {escapeAnnotations(lesson)}
-            </Markdown>}
+            <LessonMarkdown content={lesson}/>
 
             {question && (
                 <KnowledgeCheck
                     key={question.question}
                     question={question}
+                    documentId={documentId}
+                    topicId={topicId}
+                    setError={setError}
+                    completedSections={completedSections}
+                    setCompletedSections={setCompletedSections}
                 />
             )}
         </div>

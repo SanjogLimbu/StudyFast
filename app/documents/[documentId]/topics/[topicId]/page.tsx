@@ -721,7 +721,7 @@ export default function Topic() {
                             ) : (
                                 <div className="w-full text-[15px] sm:text-base">
                                     <Lesson 
-                                        lesson={currentSection?.content}
+                                        lesson={currentSection!.content}
                                         question={currentSection?.question}
                                         documentId={documentId}
                                         topicId={topicId}

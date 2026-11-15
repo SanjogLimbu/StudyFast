@@ -215,7 +215,7 @@ function KnowledgeCheck({
     }
 
     return (
-        <div className="mt-10 rounded-xl border border-border bg-surface p-6 space-y-5">
+        <div className="mt-10 rounded-xl border border-border bg-surface p-6">
             <div>
                 <p className="text-sm font-semibold text-primary mb-2">
                     Knowledge Check
@@ -253,10 +253,6 @@ function KnowledgeCheck({
                                 }
                             `}
                         >
-                            <span className="font-medium mr-3">
-                                {String.fromCharCode(65 + index)}.
-                            </span>
-
                             <LessonMarkdown content={option} />
                         </button>
                     )
@@ -300,8 +296,7 @@ export default function Lesson(
         <div className="lesson">
             <LessonMarkdown content={lesson}/>
 
-            {question && documentId && topicId && setError &&
-                completedSections !== undefined && setCompletedSections && (
+            {question && documentId && topicId && setError && completedSections !== undefined && setCompletedSections && (
                 <KnowledgeCheck
                     key={question.question}
                     question={question}

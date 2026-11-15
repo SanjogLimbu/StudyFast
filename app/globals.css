@@ -67,17 +67,24 @@ body {
   }
 
   .lesson { @apply flex flex-col gap-3 leading-normal; }
-  .lesson h2 { @apply text-lg font-bold mt-2; }
+  .lesson h1 { @apply text-xl font-semibold mt-4 first:mt-0; }
+  .lesson h2 { @apply text-lg font-semibold mt-5 pb-1.5 border-b border-border first:mt-0; }
+  .lesson h3 { @apply text-base font-semibold mt-3 first:mt-0; }
+  .lesson strong { @apply font-semibold; }
+  .lesson a { @apply text-primary underline underline-offset-2 hover:brightness-125; }
   .lesson ul { @apply list-disc pl-6; }
   .lesson ol { @apply list-decimal pl-6; }
-  .lesson li { @apply my-0.5; }
+  .lesson li { @apply my-1 marker:text-accent; }
+  .lesson blockquote { @apply border-l-2 border-primary/60 bg-primary-soft/40 rounded-r-lg py-2 pl-4 pr-3 text-accent; }
+  .lesson hr { @apply border-border my-2; }
   .lesson code { @apply font-mono text-sm bg-background border border-border rounded px-1 py-0.5; }
   .lesson pre { @apply bg-background border border-border rounded-xl p-3 overflow-x-auto; }
   .lesson pre code { @apply bg-transparent border-0 p-0; }
   .lesson .katex-display { @apply overflow-x-auto overflow-y-hidden; }
-  .lesson table { @apply block overflow-x-auto; }
+  .lesson table { @apply block overflow-x-auto text-sm border-collapse; }
   .lesson th, .lesson td { @apply border border-border px-3 py-2 text-left; }
-  .lesson th { @apply bg-background font-bold; }
+  .lesson th { @apply bg-surface font-semibold; }
+  .lesson tbody tr:nth-child(even) { @apply bg-surface/50; }
 }
 
 @layer base {

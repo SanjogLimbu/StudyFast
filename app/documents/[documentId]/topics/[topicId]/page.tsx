@@ -143,7 +143,7 @@ function LessonPanel({
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-6 py-8 scrollbar-none [&::-webkit-scrollbar]:hidden">
+                <div className="flex-1 overflow-y-auto px-6 py-8 text-[15px] sm:text-base">
                     <Lesson lesson={lesson} />
                 </div>
             </aside>
@@ -297,7 +297,7 @@ export default function Topic() {
     const [completedSections, setCompletedSections] = useState(0)
 
     const currentSection = lessonData?.lesson_sections?.[completedSections]
-    const lessonContent = lessonData?.lesson_sections?.slice(0, completedSections + 1)
+    const fullLessonContent = lessonData?.lesson_sections?.slice(0, completedSections + 1)
         .map(section => section.content)
         .join("\n\n") ?? ""
 
@@ -710,7 +710,9 @@ export default function Topic() {
                 />
 
                 <main className="flex-1 flex flex-col overflow-y-auto">
-                    <div className="flex-1 w-full max-w-2xl mx-auto px-6 py-6 flex flex-col items-center justify-center">
+                    <div className={`flex-1 w-full max-w-2xl mx-auto px-6 py-6 flex flex-col items-center ${
+                        unreadLesson && lessonData ? "justify-start" : "justify-center"
+                    }`}>
                         {unreadLesson && lessonData ? (
                             typeof lessonData.lesson === "string" ? (
                                 <div className="w-full text-[15px] sm:text-base">
@@ -719,7 +721,7 @@ export default function Topic() {
                             ) : (
                                 <div className="w-full text-[15px] sm:text-base">
                                     <Lesson 
-                                        lesson={lessonContent}
+                                        lesson={currentSection?.content}
                                         question={currentSection?.question}
                                         documentId={documentId}
                                         topicId={topicId}
@@ -755,7 +757,7 @@ export default function Topic() {
 
                 {lessonOpen && lessonData && (
                     <LessonPanel
-                        lesson={lessonContent}
+                        lesson={fullLessonContent}
                         onClose={() => setLessonOpen(false)}
                     />
                 )}

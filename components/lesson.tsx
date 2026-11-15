@@ -215,18 +215,18 @@ function KnowledgeCheck({
     }
 
     return (
-        <div className="mt-2 rounded-xl border border-border bg-surface p-4">
-            <div>
-                <p className="text-sm font-semibold text-primary mb-2">
+        <div className="mt-4 rounded-xl border border-border bg-surface p-4 flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                     Knowledge Check
                 </p>
 
-                <h3 className="text-base font-semibold">
+                <div className="font-semibold">
                     <LessonMarkdown content={question.question}/>
-                </h3>
+                </div>
             </div>
 
-            <div className="flex flex-col gap-3 space-y-4">
+            <div className="flex flex-col gap-2">
                 {question.options.map((option, index) => {
                     const isSelected = selectedAnswer === index
                     const isCorrect = index === question.answer_index
@@ -243,13 +243,14 @@ function KnowledgeCheck({
                             onClick={() => answerQuestion(index)}
                             disabled={answered && !canSkip}
                             className={`
-                                w-full rounded-lg border p-4 text-left
+                                w-full rounded-lg border px-4 py-3 text-left
                                 transition-colors cursor-pointer
+                                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary
                                 ${answered && isCorrect
-                                    ? "border-green-500 bg-green-500/10 text-green-500"
+                                    ? "border-success bg-success/10 text-success"
                                     : answered && isSelected
-                                        ? "border-red-500 bg-red-500/10 text-red-500"
-                                        : "border-border hover:bg-surface-hover"
+                                        ? "border-danger bg-danger/10 text-danger"
+                                        : "border-border bg-background hover:border-primary/60 hover:bg-primary-soft/40"
                                 }
                             `}
                         >
@@ -260,9 +261,11 @@ function KnowledgeCheck({
             </div>
 
             {answered && (
-                <div className="rounded-lg bg-surface-secondary p-4 space-y-2">
+                <div className={`rounded-lg border-l-2 bg-background px-4 py-3 flex flex-col gap-2 ${
+                    isCorrect ? "border-success" : "border-danger"
+                }`}>
                     <p className={`font-semibold ${
-                        isCorrect ? "text-success" : "text-red-500"
+                        isCorrect ? "text-success" : "text-danger"
                     }`}>
                         {isCorrect ? "Correct!" : "Not quite!"}
                     </p>

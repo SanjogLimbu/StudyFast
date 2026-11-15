@@ -60,7 +60,7 @@ function StepBar({
     step: number
     progress: number
     documentId: string
-    oldLesson: string
+    oldLesson?: string | null
     onOpenLesson?: () => void
     onNext?: () => void
     setConfirm: () => void 

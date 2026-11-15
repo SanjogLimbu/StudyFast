@@ -149,8 +149,8 @@ function KnowledgeCheck({
     setCompletedSections
 }: {
     question: LessonQuestion;
-    documentId: number, 
-    topicId: number,
+    documentId: string,
+    topicId: string,
     setError: React.Dispatch<React.SetStateAction<string>>,
     completedSections: number,
     setCompletedSections: React.Dispatch<React.SetStateAction<number>>
@@ -293,14 +293,15 @@ export default function Lesson(
     documentId?: string 
     topicId?: string
     setError?: React.Dispatch<React.SetStateAction<string>>,
-    completedSections: number,
-    setCompletedSections: React.Dispatch<React.SetStateAction<number>>
+    completedSections?: number,
+    setCompletedSections?: React.Dispatch<React.SetStateAction<number>>
 }) {
     return (
         <div className="lesson">
             <LessonMarkdown content={lesson}/>
 
-            {question && (
+            {question && documentId && topicId && setError &&
+                completedSections !== undefined && setCompletedSections && (
                 <KnowledgeCheck
                     key={question.question}
                     question={question}

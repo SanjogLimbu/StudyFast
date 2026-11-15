@@ -754,17 +754,10 @@ export default function Topic() {
                 </main>
 
                 {lessonOpen && lessonData && (
-                    typeof lessonData.lesson === "string" ? (
-                        <LessonPanel
-                            lesson={lessonData.lesson}
-                            onClose={() => setLessonOpen(false)}
-                        />
-                    ) : lessonData.lesson_sections?.[0] ? (
-                        <LessonPanel
-                            lesson={lessonData.lesson_sections[0].content}
-                            onClose={() => setLessonOpen(false)}
-                        />
-                    ) : null
+                    <LessonPanel
+                        lesson={lessonContent}
+                        onClose={() => setLessonOpen(false)}
+                    />
                 )}
 
                 {error && (

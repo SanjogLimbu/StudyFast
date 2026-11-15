@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 
 from database import get_db
 from models import Document, User, Topic, TopicMastery
-from schemas import PromptRequest, HelpPrompt, DocumentOrder, LessonAnswerRequest
+from schemas import PromptRequest, HelpPrompt, DocumentOrder
 from routers.auth import get_current_user
 from services.document_processing import UPLOAD_PATH, UnreadableDocumentError, extract_text, generate_help_response
 
@@ -584,7 +584,6 @@ def answer_lesson(
 def read_lesson(
     document_id: int,
     topic_id: int,
-    request: LessonAnswerRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):

@@ -70,6 +70,3 @@ class HelpPrompt(BaseModel):
         ge=0
     )
 
-class LessonAnswerRequest(BaseModel):
-    section_index: int = Field(ge=0)
-    selected_index: int = Field(ge=0, le=3)

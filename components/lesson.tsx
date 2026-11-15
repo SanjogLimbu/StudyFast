@@ -215,18 +215,18 @@ function KnowledgeCheck({
     }
 
     return (
-        <div className="mt-10 rounded-xl border border-border bg-surface p-6">
+        <div className="mt-2 rounded-xl border border-border bg-surface p-4">
             <div>
                 <p className="text-sm font-semibold text-primary mb-2">
                     Knowledge Check
                 </p>
 
-                <h3 className="text-lg font-semibold">
+                <h3 className="text-base font-semibold">
                     <LessonMarkdown content={question.question}/>
                 </h3>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 space-y-4">
                 {question.options.map((option, index) => {
                     const isSelected = selectedAnswer === index
                     const isCorrect = index === question.answer_index

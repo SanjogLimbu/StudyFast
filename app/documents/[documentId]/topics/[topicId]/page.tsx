@@ -710,14 +710,14 @@ export default function Topic() {
                 />
 
                 <main className="flex-1 flex flex-col overflow-y-auto">
-                    <div className="flex-1 w-full max-w-2xl mx-auto px-6 py-10 flex flex-col items-center justify-center">
+                    <div className="flex-1 w-full max-w-2xl mx-auto px-6 py-6 flex flex-col items-center justify-center">
                         {unreadLesson && lessonData ? (
                             typeof lessonData.lesson === "string" ? (
-                                <div className="w-full text-[17px] sm:text-lg">
+                                <div className="w-full text-[15px] sm:text-base">
                                     <Lesson lesson={lessonData.lesson} />
                                 </div>
                             ) : (
-                                <div className="w-full text-[17px] sm:text-lg">
+                                <div className="w-full text-[15px] sm:text-base">
                                     <Lesson 
                                         lesson={lessonContent}
                                         question={currentSection?.question}

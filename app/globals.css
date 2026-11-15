@@ -66,13 +66,13 @@ body {
     @apply border-danger bg-danger/10 focus:border-danger focus:ring-danger/15;
   }
 
-  .lesson { @apply flex flex-col gap-4 leading-relaxed; }
-  .lesson h2 { @apply text-xl font-bold mt-4; }
+  .lesson { @apply flex flex-col gap-3 leading-normal; }
+  .lesson h2 { @apply text-lg font-bold mt-2; }
   .lesson ul { @apply list-disc pl-6; }
   .lesson ol { @apply list-decimal pl-6; }
-  .lesson li { @apply my-1; }
+  .lesson li { @apply my-0.5; }
   .lesson code { @apply font-mono text-sm bg-background border border-border rounded px-1 py-0.5; }
-  .lesson pre { @apply bg-background border border-border rounded-xl p-4 overflow-x-auto; }
+  .lesson pre { @apply bg-background border border-border rounded-xl p-3 overflow-x-auto; }
   .lesson pre code { @apply bg-transparent border-0 p-0; }
   .lesson .katex-display { @apply overflow-x-auto overflow-y-hidden; }
   .lesson table { @apply block overflow-x-auto; }

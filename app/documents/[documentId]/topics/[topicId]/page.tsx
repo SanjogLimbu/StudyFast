@@ -226,7 +226,7 @@ function QuestionPromptBar(
     }
 
     return (
-        <div className="w-full h-15 bg-black/30 flex items-center justify-center border-t border-border">
+        <div className="w-full h-15 flex items-center justify-center border-t border-border">
             <form 
                 className="flex gap-2"
                 onSubmit={(event) => {
@@ -710,9 +710,7 @@ export default function Topic() {
                 />
 
                 <main className="flex-1 flex flex-col overflow-y-auto">
-                    <div className={`flex-1 w-full max-w-2xl mx-auto px-6 py-6 flex flex-col items-center ${
-                        unreadLesson && lessonData ? "justify-start" : "justify-center"
-                    }`}>
+                    <div className="flex-1 w-full max-w-2xl mx-auto px-6 py-6 flex flex-col items-center justify-center">
                         {unreadLesson && lessonData ? (
                             typeof lessonData.lesson === "string" ? (
                                 <div className="w-full text-[15px] sm:text-base">

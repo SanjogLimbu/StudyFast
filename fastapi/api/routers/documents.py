@@ -228,7 +228,6 @@ def upload(
             detail="File must have a filename."
         )
 
-
     # Check that the file is of a valid file type (PDF, DOCX, TXT) before uploading.
     extension = Path(file.filename).suffix.lower()
 
@@ -237,7 +236,6 @@ def upload(
             status_code=400,
             detail="File type is not supported."
         )
-
 
     db.refresh(current_user, with_for_update=True)
     user_uploads_today = uploads_today(current_user)
@@ -248,8 +246,7 @@ def upload(
             detail="You reached your daily upload limit."
         ) 
 
-
-    # Stop users from uploading multiple files at once to help reduce server load / api load.
+    # Stop users from uploading multiple files at once to reduce server load as document/prompt processing is expensive.
     query = (
         select(Document.id)
         .where(
@@ -263,7 +260,6 @@ def upload(
             status_code=429,
             detail="Wait for your previous upload to finish."
         )
-
 
     # Save the file temporarily under a folder named after the user id so its text can be extracted.
     # User folder must be dynamically created if it does not exist (first time uploading).
@@ -279,7 +275,6 @@ def upload(
 
     stored_filename = f"{uuid4()}{extension}"
     file_path = (user_directory / stored_filename)
-
 
     # Write the document in chunks of 1 MB to avoid storing entire document on memory.
     size = 0
@@ -298,14 +293,12 @@ def upload(
 
                 destination.write(chunk)
 
-
     except Exception:
         if (file_path.exists()):
             file_path.unlink()
 
 
         raise
-
 
     if (size < MIN_FILE_SIZE):
         file_path.unlink()
@@ -314,7 +307,6 @@ def upload(
             status_code=422,
             detail="File is too small."
         )
-
 
     # Reject files without readable text (e.g. scanned PDFs) before they are queued.
     # Only the text is kept, so the file is deleted either way.
@@ -330,13 +322,11 @@ def upload(
     finally:
         file_path.unlink()
 
-
     document = Document(
         user_id=current_user.id,
         original_filename=file.filename,
         text=text
     )
-
 
     current_user.last_upload = datetime.now(timezone.utc)
     current_user.uploads = user_uploads_today + 1
@@ -350,7 +340,6 @@ def upload(
         db.rollback()
 
         raise
-
 
     # Let AI Document processing be done in the background by a worker as it's expensive.
     document_queue.enqueue(

@@ -73,11 +73,13 @@ function EmptyUpload(
     onPromptUpload,
     prompt,
     setPrompt,
+    waiting
 }: { 
     onUpload: (event: React.ChangeEvent<HTMLInputElement>) => void,
     onPromptUpload: (prompt: string) => void,
     prompt: string,
-    setPrompt: React.Dispatch<React.SetStateAction<string>>
+    setPrompt: React.Dispatch<React.SetStateAction<string>>,
+    waiting: boolean
 }) {
     return (
         <div className="w-full min-h-screen flex flex-col gap-5 justify-center items-center p-6 pt-24">
@@ -97,45 +99,54 @@ function EmptyUpload(
                     onChange={onUpload}
                 />
 
-                <span className="
-                    w-14 h-14 rounded-2xl bg-primary-soft text-primary text-3xl font-bold
-                    flex items-center justify-center transition-all group-hover:scale-110
-                ">
-                    +
-                </span>
+                {waiting ? (
+                    <>
+                        <span className="w-16 h-16 border-2 border-border border-t-primary rounded-full animate-spin" />
+                    </>
+                ) : (
+                    <>
+                        <span className="
+                            w-14 h-14 rounded-2xl bg-primary-soft text-primary text-3xl font-bold
+                            flex items-center justify-center transition-all group-hover:scale-110
+                        ">
+                            +
+                        </span>
 
-                <p className="text-lg font-bold">
-                    Upload your first document
-                </p>
+                        <p className="text-lg font-bold">
+                            Upload your first document
+                        </p>
 
-                <p className="text-accent text-sm">
-                    PDF, DOCX, or TXT
-                </p>
+                        <p className="text-accent text-sm">
+                            PDF, DOCX, or TXT
+                        </p>
+                    </>
+                )}
             </label>
 
-
-            <div className="w-full max-w-2xl flex items-center gap-3 my-1 text-accent">
-                <div className="flex-1 border-t border-border" />
-
-                <span className="text-xs font-bold">
-                    OR
-                </span>
-
-                <div className="flex-1 border-t border-border" />
-            </div>
-
-
             {/* Enter prompt and turn it into a course */}
-            <PromptBar 
-                onPromptUpload={onPromptUpload}
-                prompt={prompt}
-                setPrompt={setPrompt} 
-                className="w-full max-w-2xl"
-            />
+            {!waiting && (
+                <>
+                    <div className="w-full max-w-2xl flex items-center gap-3 my-1 text-accent">
+                        <div className="flex-1 border-t border-border" />
+
+                        <span className="text-xs font-bold">
+                            OR
+                        </span>
+
+                        <div className="flex-1 border-t border-border" />
+                    </div>
+
+                    <PromptBar 
+                        onPromptUpload={onPromptUpload}
+                        prompt={prompt}
+                        setPrompt={setPrompt} 
+                        className="w-full max-w-2xl"
+                    />
+                </>
+            )}
         </div>
     )
 }
-
 
 function AddDocument({
     setOpenCreate
@@ -161,7 +172,6 @@ function AddDocument({
         </button>
     )
 }
-
 
 function Document({
     document,
@@ -270,7 +280,6 @@ function Document({
     )
 }
 
-
 function Create(
 {
     onUpload,
@@ -278,12 +287,14 @@ function Create(
     onClose,
     prompt,
     setPrompt,
+    waiting
 } : {
     onUpload: (event: React.ChangeEvent<HTMLInputElement>) => void,
     onPromptUpload: (prompt: string) => void,
     onClose: () => void,
     prompt: string,
-    setPrompt: React.Dispatch<React.SetStateAction<string>>
+    setPrompt: React.Dispatch<React.SetStateAction<string>>,
+    waiting: boolean
 }
 ) {
     return (
@@ -296,18 +307,25 @@ function Create(
                 onClick={(event) => event.stopPropagation()}
             >
                 {/* Upload document and turn it into a course */}
-                <label className="
-                    h-60 rounded-2xl border-2 border-dashed border-border bg-surface/60 text-accent
+                <label className={`
+                    rounded-2xl border-2 border-dashed border-border bg-surface/60 text-accent
                     flex flex-col gap-1 justify-center items-center cursor-pointer transition-all
                     hover:border-primary hover:text-primary hover:bg-primary-soft
-                ">
-                    <span className="text-3xl font-bold">
-                        +
-                    </span>
+                    ${waiting ? "h-full" : "h-60"}
+                `}>
+                    {waiting ? (
+                        <span className="w-16 h-16 border-2 border-border border-t-primary rounded-full animate-spin" />
+                    ) : (
+                        <>
+                            <span className="text-3xl font-bold">
+                                +
+                            </span>
 
-                    <span className="text-sm font-bold">
-                        Upload document
-                    </span>
+                            <span className="text-sm font-bold">
+                                Upload document
+                            </span>
+                        </>
+                    )}
 
                     <input
                         type="file"
@@ -317,23 +335,26 @@ function Create(
                     />
                 </label>
                 
-                <div className="flex items-center gap-3 my-1 text-accent">
-                    <div className="flex-1 border-t border-border" />
-
-                    <span className="text-xs font-bold">
-                        OR
-                    </span>
-
-                    <div className="flex-1 border-t border-border" />
-                </div>
-
-
                 {/* Enter prompt and turn it into a course */}
-                <PromptBar 
-                    onPromptUpload={onPromptUpload}
-                    prompt={prompt}
-                    setPrompt={setPrompt} 
-                />
+                {!waiting && (
+                    <>
+                        <div className="flex items-center gap-3 my-1 text-accent">
+                            <div className="flex-1 border-t border-border" />
+
+                            <span className="text-xs font-bold">
+                                OR
+                            </span>
+
+                            <div className="flex-1 border-t border-border" />
+                        </div>
+
+                        <PromptBar 
+                            onPromptUpload={onPromptUpload}
+                            prompt={prompt}
+                            setPrompt={setPrompt} 
+                        />
+                    </>
+                )}
             </div>
         </div>
     )
@@ -343,17 +364,18 @@ function Create(
 
 export default function Home() {
     const router = useRouter()
+
     const [documents, setDocuments] = useState<DocumentData[]>()
     const [documentToDelete, setDocumentToDelete] = useState<number>()
     const [uploadError, setUploadError] = useState("")
     const [openCreate, setOpenCreate] = useState(false)
     const [prompt, setPrompt] = useState("")
     const [draggedId, setDraggedId] = useState<number>()
+    const [waiting, setWaiting] = useState(false)
 
     useEffect(() => {
         getDocuments()
     }, [])
-
     
     // Poll user's documents every second so they can see the status of their documents live.
     useEffect(() => {
@@ -363,21 +385,17 @@ export default function Home() {
                 document.status == "processing"
         )
 
-
         if (!processing || draggedId !== undefined) {
             return
         }
-
 
         const timeout = setTimeout(() => {
             getDocuments()
         }, 1000)
 
-
         return () => clearTimeout(timeout)
 
     }, [documents, draggedId])
-
 
     // Moves the dragged document into the hovered document's place.
     function moveDocument(targetId: number) {
@@ -385,12 +403,10 @@ export default function Home() {
             return
         }
 
-
         setDocuments(prev => {
             if (!prev) {
                 return prev
             }
-
 
             const next = [...prev]
             const from = next.findIndex(document => document.id === draggedId)
@@ -401,7 +417,6 @@ export default function Home() {
             return next
         })
     }
-
 
     async function saveOrder() {
         setDraggedId(undefined)
@@ -424,7 +439,6 @@ export default function Home() {
         }
     }
 
-
     async function deleteDocument(documentId: number) {
         try {
             const response = await fetch(
@@ -434,7 +448,6 @@ export default function Home() {
                     credentials: "include"
                 }
             )
-
 
             if (response.ok) {
                 setDocuments(prev =>
@@ -447,7 +460,6 @@ export default function Home() {
         }
     }
 
-
     async function getDocuments() {
         try {
             const response = await fetch(
@@ -457,12 +469,10 @@ export default function Home() {
                 }
             )
 
-
             if (!response.ok) {
                 setDocuments([])
                 return
             }
-
 
             const data = await response.json()
             setDocuments(data)
@@ -472,21 +482,21 @@ export default function Home() {
         }
     }
 
-
     async function uploadFile(event: React.ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0] ?? null
 
         // Reset so selecting the same file again still triggers onChange.
         event.target.value = ""
 
-        if (!file) {
+        if (!file || waiting) {
             return
         }
 
-
         const formData = new FormData()
         formData.append("file", file)
+
         setUploadError("")
+        setWaiting(true)
 
         try {
             const response = await fetch(
@@ -497,7 +507,6 @@ export default function Home() {
                     "body": formData
                 }
             )
-
 
             setOpenCreate(false)
 
@@ -515,10 +524,9 @@ export default function Home() {
             return
         }
 
-
         getDocuments()
+        setWaiting(false)
     }
-
 
     async function uploadPrompt(prompt: string) {
         setPrompt("")
@@ -536,7 +544,6 @@ export default function Home() {
             return
         }
 
-
         try {
             const response = await fetch(
                 "/api/documents/prompt",
@@ -549,7 +556,6 @@ export default function Home() {
                     "body": JSON.stringify({ user_prompt: prompt })
                 }
             )
-
 
             const json = await response.json()
 
@@ -566,7 +572,6 @@ export default function Home() {
         }
     }
 
-
     return (
         <>
             <NavBar />
@@ -581,6 +586,7 @@ export default function Home() {
                     onPromptUpload={uploadPrompt}
                     prompt={prompt}
                     setPrompt={setPrompt} 
+                    waiting={waiting}
                 />
             ) : (
                 <div className="w-full max-w-5xl mx-auto px-4 pt-28 pb-10">
@@ -616,7 +622,6 @@ export default function Home() {
                 </div>
             )}
 
-
             {uploadError ? (
                 <NoticePrompt 
                     message={uploadError}
@@ -629,9 +634,9 @@ export default function Home() {
                     onClose={() => setOpenCreate(false)}
                     prompt={prompt}
                     setPrompt={setPrompt} 
+                    waiting={waiting}
                 />
             )}
-
 
             {documentToDelete && (
                 <ConfirmationPrompt

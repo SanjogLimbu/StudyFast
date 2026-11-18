@@ -1,11 +1,14 @@
 import type { ComponentProps } from "react"
 import Markdown, { type ExtraProps } from "react-markdown"
 import { useState } from "react"
+
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
 import "katex/dist/katex.min.css"
 import Graph from "@/components/graph"
+
+import { LessonQuestion, LessonData } from "@/lib/sharedTypes"
 
 //
 
@@ -17,13 +20,6 @@ type Node = {
     children?: Node[]
     data?: { hProperties?: Record<string, unknown> }
     position?: { start: { offset?: number } }
-}
-
-type LessonQuestion = {
-    question: string
-    options: string[]
-    answer_index: number
-    explanation: string
 }
 
 //
@@ -146,14 +142,18 @@ function KnowledgeCheck({
     topicId,
     setError,
     completedSections,
-    setCompletedSections
+    setCompletedSections,
+    lessonData, 
+    setLessonData
 }: {
     question: LessonQuestion;
     documentId: string,
     topicId: string,
     setError: React.Dispatch<React.SetStateAction<string>>,
     completedSections: number,
-    setCompletedSections: React.Dispatch<React.SetStateAction<number>>
+    setCompletedSections: React.Dispatch<React.SetStateAction<number>>,
+    lessonData?: LessonData, 
+    setLessonData?: React.Dispatch<React.SetStateAction<LessonData>>
 }) {
     const [waiting, setWaiting] = useState(false)
     const [canSkip, setCanSkip] = useState(false)
@@ -166,14 +166,25 @@ function KnowledgeCheck({
             return 
         }
 
-
         if (canSkip) {
-            setCompletedSections(completedSections + 1)
+            const nextSection = completedSections + 1
+
+            if (lessonData && nextSection < lessonData.lesson_sections!.length) {
+                setCompletedSections(nextSection)
+            }
+            else if (lessonData && setLessonData) {
+                // Lesson is finished so we need to update state to re-render page
+                setLessonData({
+                    ...lessonData,
+                    read: true,
+                })
+            }
+
+
             setCanSkip(false)
 
             return 
         }
-
 
         setWaiting(true)
         setSelectedAnswer(selectedAnswerIndex)
@@ -187,7 +198,6 @@ function KnowledgeCheck({
             new Audio("/sfx/question_wrong.mp3").play()
         }
 
-
         try {
             const response = await fetch(
                 `/api/documents/${documentId}/topics/${topicId}/lesson/answer`,
@@ -197,19 +207,18 @@ function KnowledgeCheck({
                 }
             )
 
-
             if (response.ok) {
                 setCanSkip(true)
-            } 
+            }
             else {
                 const data = await response.json()
-                setError(data.detail)
+                const detail = data.detail 
+                setError(detail)
             }
         } 
         catch {
             setError("A network error occured.")
         }
-
 
         setWaiting(false)
     }
@@ -285,7 +294,9 @@ export default function Lesson(
     topicId,
     setError,
     completedSections,
-    setCompletedSections
+    setCompletedSections,
+    lessonData,
+    setLessonData
 }: { 
     lesson: string 
     question?: LessonQuestion
@@ -293,7 +304,9 @@ export default function Lesson(
     topicId?: string
     setError?: React.Dispatch<React.SetStateAction<string>>,
     completedSections?: number,
-    setCompletedSections?: React.Dispatch<React.SetStateAction<number>>
+    setCompletedSections?: React.Dispatch<React.SetStateAction<number>>,
+    lessonData?: LessonData, 
+    setLessonData?: React.Dispatch<React.SetStateAction<LessonData>>
 }) {
     return (
         <div className="lesson">
@@ -308,6 +321,8 @@ export default function Lesson(
                     setError={setError}
                     completedSections={completedSections}
                     setCompletedSections={setCompletedSections}
+                    lessonData={lessonData}
+                    setLessonData={setLessonData}
                 />
             )}
         </div>

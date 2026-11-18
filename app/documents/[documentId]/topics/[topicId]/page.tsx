@@ -11,6 +11,8 @@ import Lesson from "@/components/lesson"
 import FlashcardTask, { type Flashcard } from "@/components/flashcardTask"
 import QuestionTask, { type QuestionData, type QuestionResponse } from "@/components/questionTask"
 
+import { LessonData } from "@/lib/sharedTypes"
+
 //
 
 type Data = {
@@ -18,28 +20,6 @@ type Data = {
     seconds_left: number
 }
 
-type LessonQuestion = {
-    question: string
-    options: string[]
-    answer_index: number
-    explanation: string
-}
-
-type LessonSection = {
-    title: string
-    content: string
-    question: LessonQuestion
-}
-
-type LessonData = {
-    name: string
-    lesson: string | null
-    lesson_sections: LessonSection[] | null
-    sections_completed: number
-    read: boolean
-}
-
-// A card also says how much of the topic's flashcards are done.
 type CardData = Flashcard & {
     completion: number
 }
@@ -47,6 +27,10 @@ type CardData = Flashcard & {
 const STEPS = ["Lesson", "Flashcards", "Quiz"]
 
 //
+
+function roundToPercentage(x: number) {
+    return Math.round(x * 1000) / 10
+}
 
 function StepBar({
     step,
@@ -296,22 +280,27 @@ export default function Topic() {
     const [lessonOpen, setLessonOpen] = useState(false)
     const [completedSections, setCompletedSections] = useState(0)
 
-    const currentSection = lessonData?.lesson_sections?.[completedSections]
-    const fullLessonContent = lessonData?.lesson_sections?.slice(0, completedSections + 1)
+    const lessonSections = lessonData?.lesson_sections
+    const currentSection = lessonSections?.[completedSections]
+    const fullLessonContent = lessonSections?.slice(0, completedSections + 1)
         .map(section => section.content)
         .join("\n\n") ?? ""
 
     useEffect(() => {
-        getLesson().then(getFlashcard)
+        getLesson()
     }, [])
 
+    useEffect(() => {
+        if (lessonData?.read) {
+            getFlashcard()
+        }
+    }, [lessonData?.read])
 
     useEffect(() => {
         if (state == "questions") { 
             getQuestions()
         }
     }, [state])
-
 
     {/* Client calculated break timer that switches back to showing flashcards after period ends. */}
     useEffect(() => {
@@ -679,16 +668,22 @@ export default function Topic() {
         return false
     }
 
-    // The lesson opens by itself until it has been read, and from the Lesson button after that.
     const unreadLesson = !lessonData?.read
 
     // 0 is the lesson, 1 the flashcards, 2 the quiz and 3 a finished topic.
     const step = unreadLesson ? 0 : state == "questions" ? 2 : state == "complete" ? 3 : 1
 
-    const progress = unreadLesson ? 0
-    : questions ? Math.round(currentQuestion / questions.length * 1000) / 10 || 0
-    : breakData ? breakData.completion
-    : currentCard?.completion ?? 0
+    const progress = unreadLesson
+    ? lessonSections?.length
+        ? roundToPercentage(completedSections / lessonSections.length)
+        : 0
+    : questions
+        ? questions.length
+        ? roundToPercentage(currentQuestion / questions.length)
+        : 0
+        : breakData
+        ? (breakData.completion ?? 0)
+        : (currentCard?.completion ?? 0)
 
     return (
         <>
@@ -716,16 +711,18 @@ export default function Topic() {
                                 <div className="w-full text-[15px] sm:text-base">
                                     <Lesson lesson={lessonData.lesson} />
                                 </div>
-                            ) : (
+                            ) : currentSection && (
                                 <div className="w-full text-[15px] sm:text-base">
                                     <Lesson 
-                                        lesson={currentSection!.content}
-                                        question={currentSection?.question}
+                                        lesson={currentSection.content}
+                                        question={currentSection.question}
                                         documentId={documentId}
                                         topicId={topicId}
                                         setError={setError}
                                         completedSections={completedSections}
                                         setCompletedSections={setCompletedSections}
+                                        lessonData={lessonData}
+                                        setLessonData={setLessonData}
                                      />
                                 </div>       
                             )
@@ -737,6 +734,7 @@ export default function Topic() {
                                 onReview={review}
                                 error={error} 
                                 ready={requestState == "ready"}
+                                setError={setError}
                             />
                         ) : breakData ? (
                             <RestingPeriod timeLeft={breakTimeLeft} documentId={documentId} />

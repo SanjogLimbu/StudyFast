@@ -1,4 +1,5 @@
 import LabeledText from "@/components/labeledText"
+import { ReactElement } from "react"
 
 //
 
@@ -16,14 +17,16 @@ export default function FlashcardTask({
     onReveal,
     onReview,
     error,
-    ready
+    ready,
+    setError
 }: {
     card: Flashcard
     cardState: string
     onReveal: () => void
     onReview: (answer: string) => void
     error: string,
-    ready: boolean
+    ready: boolean,
+    setError: React.Dispatch<React.SetStateAction<string>>
 }) {
     const shown = cardState == "shown"
 
@@ -47,20 +50,19 @@ export default function FlashcardTask({
                 playVoice()
             }
             else {
-
+                setError("A network error occured.")
             }
         }
         catch {
-
+            setError("A network error occured.")
         }
     }
-
 
     return (
         <div className="flex flex-col gap-6 items-center w-full">
             <div className={`
-                card w-full min-h-80 flex flex-col items-center justify-center text-center p-10 gap-4 relative
-                text-2xl font-semibold leading-snug transition-all ${shown ? "border-primary/40" : ""}
+                card w-full min-h-80 flex flex-col items-center justify-center text-center p-10 gap-4 relative min-w-0
+                wrap-break-words text-2xl font-semibold leading-snug transition-all ${shown ? "border-primary/40" : ""}
             `}>
                 <span className="text-xs font-bold uppercase tracking-wider text-accent">
                     {shown ? "Answer" : "Question"}

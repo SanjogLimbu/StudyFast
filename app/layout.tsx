@@ -11,11 +11,21 @@ const nunito = Nunito({
 
 //
 
+const description = "Upload your notes, PDFs or slides and StudyFast turns them into practice questions, flashcards and mock tests that get graded. Track progress across your courses."
+
 export const metadata: Metadata = {
-  title: "StudyFast",
-  icons: {
-    icon: "/logo.png"
-  }
+  metadataBase: new URL("https://www.studyfast.now"),
+  title: {
+    default: "StudyFast – AI Practice Tests & Flashcards From Your Notes",
+    template: "%s | StudyFast",
+  },
+  description,
+  openGraph: {
+    type: "website",
+    siteName: "StudyFast",
+    title: "StudyFast – AI Practice Tests & Flashcards From Your Notes",
+    description,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

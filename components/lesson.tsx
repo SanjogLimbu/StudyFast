@@ -153,7 +153,7 @@ function KnowledgeCheck({
     completedSections: number,
     setCompletedSections: React.Dispatch<React.SetStateAction<number>>,
     lessonData?: LessonData, 
-    setLessonData?: React.Dispatch<React.SetStateAction<LessonData>>
+    setLessonData?: React.Dispatch<React.SetStateAction<LessonData | undefined>>
 }) {
     const [waiting, setWaiting] = useState(false)
     const [canSkip, setCanSkip] = useState(false)
@@ -306,7 +306,7 @@ export default function Lesson(
     completedSections?: number,
     setCompletedSections?: React.Dispatch<React.SetStateAction<number>>,
     lessonData?: LessonData, 
-    setLessonData?: React.Dispatch<React.SetStateAction<LessonData>>
+    setLessonData?: React.Dispatch<React.SetStateAction<LessonData | undefined>>
 }) {
     return (
         <div className="lesson">

@@ -24,6 +24,7 @@ function renderCard(cardState: string, ready = true) {
             onReview={onReview}
             error=""
             ready={ready}
+            setError={vi.fn()}
         />
     )
 

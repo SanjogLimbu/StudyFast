@@ -308,23 +308,58 @@ export default function Lesson(
     lessonData?: LessonData, 
     setLessonData?: React.Dispatch<React.SetStateAction<LessonData | undefined>>
 }) {
-    return (
-        <div className="lesson">
-            <LessonMarkdown content={lesson}/>
+    const [showQuestion, setShowQuestion] = useState(false)
 
-            {question && documentId && topicId && setError && completedSections !== undefined && setCompletedSections && (
-                <KnowledgeCheck
-                    key={question.question}
-                    question={question}
-                    documentId={documentId}
-                    topicId={topicId}
-                    setError={setError}
-                    completedSections={completedSections}
-                    setCompletedSections={setCompletedSections}
-                    lessonData={lessonData}
-                    setLessonData={setLessonData}
-                />
-            )}
+    if (!(question && documentId && topicId && setError && completedSections !== undefined && setCompletedSections)) {
+        return (
+            <div className="lesson">
+                <LessonMarkdown content={lesson} />
+            </div>
+        )
+    }
+
+    return (
+        <div className="lesson relative flex-1 min-h-0 overflow-hidden">
+            <div className={`
+                absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(0.65,0,0.35,1)]
+                ${showQuestion ? "-translate-y-full" : ""}
+            `}>
+                <div inert={showQuestion} className="absolute inset-0 flex flex-col">
+                    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+                        <div className="my-auto flex flex-col gap-3">
+                            <LessonMarkdown content={lesson} />
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowQuestion(true)}
+                        className="
+                            shrink-0 mx-auto mt-6 mb-1 cursor-pointer rounded-full border border-border
+                            px-5 py-3 transition-colors hover:border-primary/60 hover:bg-primary-soft/40
+                            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary
+                        "
+                    >
+                        Knowledge Check
+                    </button>
+                </div>
+
+                <div inert={!showQuestion} className="absolute inset-x-0 top-full h-full overflow-y-auto flex flex-col">
+                    <div className="my-auto">
+                        <KnowledgeCheck
+                            key={question.question}
+                            question={question}
+                            documentId={documentId}
+                            topicId={topicId}
+                            setError={setError}
+                            completedSections={completedSections}
+                            setCompletedSections={setCompletedSections}
+                            lessonData={lessonData}
+                            setLessonData={setLessonData}
+                        />
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }

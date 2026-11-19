@@ -669,6 +669,7 @@ export default function Topic() {
     }
 
     const unreadLesson = !lessonData?.read
+    const fitLesson = unreadLesson && !!lessonData && typeof lessonData.lesson !== "string"
 
     // 0 is the lesson, 1 the flashcards, 2 the quiz and 3 a finished topic.
     const step = unreadLesson ? 0 : state == "questions" ? 2 : state == "complete" ? 3 : 1
@@ -705,15 +706,16 @@ export default function Topic() {
                 />
 
                 <main className="flex-1 flex flex-col overflow-y-auto">
-                    <div className="flex-1 w-full max-w-2xl mx-auto px-6 py-6 flex flex-col items-center justify-center">
+                    <div className={`flex-1 ${fitLesson ? "min-h-0" : ""} w-full max-w-2xl mx-auto px-6 py-6 flex flex-col items-center justify-center`}>
                         {unreadLesson && lessonData ? (
                             typeof lessonData.lesson === "string" ? (
-                                <div className="w-full text-[15px] sm:text-base">
+                                <div className="w-full text-[17px] sm:text-lg">
                                     <Lesson lesson={lessonData.lesson} />
                                 </div>
                             ) : currentSection && (
-                                <div className="w-full text-[15px] sm:text-base">
+                                <div className="w-full flex-1 min-h-0 flex flex-col text-[17px] sm:text-lg">
                                     <Lesson 
+                                        key={completedSections}
                                         lesson={currentSection.content}
                                         question={currentSection.question}
                                         documentId={documentId}

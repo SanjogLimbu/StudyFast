@@ -138,7 +138,6 @@ export default function Home() {
         loadDocument()
     }, [documentId])
 
-
     // Poll every second while topics are generating so they open up without a page refresh.
     useEffect(() => {
         const generating = document?.topics.some(

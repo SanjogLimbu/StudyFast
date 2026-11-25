@@ -62,6 +62,31 @@ class User(Base):
         nullable=False
     )
 
+    plan: Mapped[str] = mapped_column(
+        String(4),
+        default="Free",
+        server_default="Free",
+        index=True,
+        nullable=False
+    )
+
+    stripe_customer_id: Mapped[str | None] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=True
+    )
+
+    stripe_subscription_id: Mapped[str | None] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=True
+    )
+
+    subscription_status: Mapped[str | None] = mapped_column(
+        String(32),
+        nullable=True
+    )
+
 
     # User -< many Document
     documents: Mapped[list["Document"]] = relationship(

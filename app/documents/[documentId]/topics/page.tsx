@@ -160,7 +160,6 @@ export default function Home() {
         return () => clearTimeout(timeout)
     }, [document])
 
-
     async function loadDocument() {
         const data = await getDocument(documentId)
 
@@ -168,7 +167,6 @@ export default function Home() {
             setDocument(data)
         }
     }
-    
 
     return (
         <>
@@ -189,7 +187,6 @@ export default function Home() {
                 </div>
             </header>
 
-
             {document && (
                 <div className="w-full min-h-screen flex justify-center pt-32 pb-20 overflow-x-hidden">
                     <div className="flex flex-col items-center gap-10">
@@ -205,7 +202,6 @@ export default function Home() {
                     </div>
                 </div>
             )}
-
 
             {error && (
                 <NoticePrompt

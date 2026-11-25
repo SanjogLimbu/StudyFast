@@ -12,6 +12,8 @@ from sqlalchemy.orm import Session, selectinload
 
 from datetime import datetime, timezone
 
+from constants import MAX_DAILY_UPLOADS_FREE, MAX_DAILY_UPLOADS_PAID, MAX_DAILY_PROMPTS_FREE, MAX_DAILY_PROMPTS_PAID
+
 from database import get_db
 from models import Document, User, Topic, TopicMastery
 from schemas import PromptRequest, HelpPrompt, DocumentOrder
@@ -28,12 +30,6 @@ router = APIRouter(
 MIN_FILE_SIZE = 1 * 1024 # 1 KB
 MAX_FILE_SIZE = MIN_FILE_SIZE * 1024 * 35  # 35 MB
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt"}
-MAX_DAILY_UPLOADS_FREE = 3
-MAX_DAILY_UPLOADS_PAID = 10
-
-# Note that a prompt refers to a question prompt for help - prompts to create courses count as regular uploads.
-MAX_DAILY_PROMPTS_FREE = 5
-MAX_DAILY_UPLOADS_PAID = 25
 
 ##
 
@@ -177,7 +173,6 @@ def prompt(
             detail="You reached your daily upload limit."
         ) 
 
-
     text = user_prompt.user_prompt
     
     document = Document(
@@ -186,7 +181,6 @@ def prompt(
         text=text,
         source="prompt"
     )
-
 
     current_user.last_upload = datetime.now(timezone.utc)
     current_user.uploads = user_uploads_today + 1

@@ -1,0 +1,4 @@
+export const MAX_DAILY_UPLOADS_FREE = 3
+export const MAX_DAILY_UPLOADS_PAID = 10
+export const MAX_DAILY_PROMPTS_FREE = 5
+export const MAX_DAILY_PROMPTS_PAID = 25

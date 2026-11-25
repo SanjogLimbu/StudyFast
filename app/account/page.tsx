@@ -1,69 +1,34 @@
-"use client"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
-import NavBar from "@/components/navbar"
-import StreakCalendar from "@/components/streakCalendar"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import AccountClient from "./AccountClient"
 
 //
 
-export default function Account() {
-    const router = useRouter()
-    
-    const [days, setDays] = useState([])
+export default async function AccountPage() {
+    const cookieStore = await cookies()
 
-    async function logout() {
-        const response = await fetch(
-            `/api/auth/logout`,
-            {
-                method: "POST",
-                credentials: "include"
-            }
-        )
-
-
-        if (response.ok) {
-            router.push("/")
+    const response = await fetch(
+        `${process.env.API_URL}/subscription/status`,
+        {
+            headers: {
+                Cookie: cookieStore.toString()
+            },
+            cache: "no-store"
         }
+    )
+
+    if (response.status === 401) {
+        redirect("/login")
     }
 
+    if (!response.ok) {
+        throw new Error("Unable to retrieve subscription")
+    }
 
-    useEffect(() => {
-        async function getActivity() {
-            try {
-                const response = await fetch("/api/auth/activity")
-                const json = await response.json()
-
-                if (response.ok) {
-                    setDays(json.days)
-                }
-            }
-            catch {
-
-            }
-        }
-
-
-        getActivity()
-    }, [])
-
+    const subscription = await response.json()
 
     return (
-        <>
-            <NavBar />
-
-            <div className="w-full min-h-screen flex flex-col items-center justify-center gap-6 p-6 pt-24">
-                <StreakCalendar days={days} />
-
-                <div className="card w-full max-w-sm p-7 flex flex-col gap-6">
-                    <button
-                        className="btn btn-danger w-full"
-                        onClick={logout}
-                    >
-                        Logout
-                    </button>
-                </div>
-            </div>
-        </>
+        <AccountClient subscription={subscription} />
     )
 }

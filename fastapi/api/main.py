@@ -6,7 +6,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from rate_limiter import limiter
 
-from routers import auth, documents, flashcards, questions
+from routers import auth, documents, flashcards, questions, subscription
 
 ##
 
@@ -70,6 +70,7 @@ app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(flashcards.router)
 app.include_router(questions.router)
+app.include_router(subscription.router)
 
 ##
 

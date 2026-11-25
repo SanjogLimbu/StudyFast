@@ -18,7 +18,6 @@ function describeDay(date: string, active: boolean) {
 
 //
 
-// days lists the UTC dates ("YYYY-MM-DD") a question task was completed.
 export default function StreakCalendar({ days }: { days: string[] }) {
     const active = new Set(days)
 
@@ -34,10 +33,8 @@ export default function StreakCalendar({ days }: { days: string[] }) {
             weeks.push([])
         }
 
-
         weeks[weeks.length - 1].push(new Date(time).toISOString().slice(0, 10))
     }
-
 
     const months = weeks.map((week) => new Date(week[0]).getUTCMonth())
 
@@ -45,7 +42,6 @@ export default function StreakCalendar({ days }: { days: string[] }) {
     let longest = 0
     let current = 0
     let run = 0
-
 
     // Counted from the earliest day given, not just the squares shown, so a streak can be longer than a year.
     const first = Math.min(start, ...days.map((day) => Date.parse(day)))
@@ -72,7 +68,6 @@ export default function StreakCalendar({ days }: { days: string[] }) {
             current = run
         }
     }
-
 
     return (
         <div className="card w-fit max-w-full p-7 flex flex-col gap-5">

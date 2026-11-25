@@ -469,7 +469,7 @@ export default function Topic() {
             }
         }
         catch {
-            
+            setError("A network error occured.")
         }
     }
 
@@ -702,7 +702,7 @@ export default function Topic() {
                             : undefined
                     }
                     onNext={unreadLesson ? readLesson : undefined}
-                    setConfirm={() => setConfirmSkip("Are you sure you want to regenerate this topic?")}
+                    setConfirm={() => setConfirm("Are you sure you want to regenerate this topic?")}
                 />
 
                 <main className="flex-1 flex flex-col overflow-y-auto">

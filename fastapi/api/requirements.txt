@@ -18,3 +18,4 @@ resend==2.49.1
 elevenlabs==2.75.0
 pytest==9.1.1
 slowapi==0.1.10
+stripe==17.1.0

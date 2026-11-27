@@ -6,7 +6,8 @@ import "katex/dist/katex.min.css"
 export default function LabeledText({ text }: { text: string }) {
     // Matches [[native script|romanization]], \$ (a literal dollar sign), $$display maths$$ and $inline maths$.
     // Inline maths can't start or end with a space or be followed by a digit, so "$5 and $10" stays as text.
-    const regex = /\[\[([^|\]]+)\|([^\]]+)\]\]|\\\$|\$\$([^$]+)\$\$|\$([^\s$](?:[^$]*[^\s$])?)\$(?!\d)/g
+    // A three-part [[kanji|kana|romanization]] keeps only the kana as the label.
+    const regex = /\[\[(?:[^|\]]+\|)?([^|\]]+)\|([^|\]]+)\]\]|\\\$|\$\$([^$]+)\$\$|\$([^\s$](?:[^$]*[^\s$])?)\$(?!\d)/g
 
     const parts: React.ReactNode[] = []
     let lastIndex = 0

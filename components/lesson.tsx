@@ -51,7 +51,8 @@ function addRuby(node: Node) {
         const parts: Node[] = []
         let lastIndex = 0
 
-        for (const match of text.matchAll(/\[\[([^|\]]+)\|([^\]]+)\]\]/g)) {
+        // A three-part [[kanji|kana|romanization]] keeps only the kana as the label.
+        for (const match of text.matchAll(/\[\[(?:[^|\]]+\|)?([^|\]]+)\|([^|\]]+)\]\]/g)) {
             parts.push(
                 {
                     type: "text",
@@ -96,7 +97,7 @@ function addRuby(node: Node) {
 const rehypeRuby = () => addRuby
 
 function escapeAnnotations(lesson: string) {
-    return lesson.replace(/\[\[([^|\]]+?)\\?\|([^\]]+)\]\]/g, "[[$1\\|$2]]")
+    return lesson.replace(/\[\[[^\]]+\]\]/g, (annotation) => annotation.replace(/\\?\|/g, "\\|"))
 }
 
 function CodeBlock({ node, children }: ComponentProps<"pre"> & ExtraProps) {

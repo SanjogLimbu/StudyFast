@@ -444,6 +444,10 @@ For non-Latin writing systems, use this notation:
 Example:
 [[私|watashi]] [[は|wa]] [[学生|gakusei]] [[です|desu]]
 
+Each annotation has exactly two parts with one | between
+them. Never add a third part, such as a kana reading
+between the kanji and the romanization.
+
 Annotate each target-language word consistently.
 
 Use the format in lesson sections, flashcards,

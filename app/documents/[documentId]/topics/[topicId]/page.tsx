@@ -686,6 +686,23 @@ export default function Topic() {
         ? (breakData.completion ?? 0)
         : (currentCard?.completion ?? 0)
 
+    // The step whose content is on screen, or null while the next one loads.
+    const shownStep = unreadLesson
+        ? (lessonData ? 0 : null)
+        : currentCard || breakData ? 1 : questions ? 2 : state == "complete" ? 3 : null
+
+    // Each move to a new step slides its content in, but not the first one shown on load.
+    const [lastShownStep, setLastShownStep] = useState<number | null>(null)
+    const [stepSlides, setStepSlides] = useState(0)
+
+    if (shownStep !== null && shownStep !== lastShownStep) {
+        if (lastShownStep !== null) {
+            setStepSlides(stepSlides + 1)
+        }
+
+        setLastShownStep(shownStep)
+    }
+
     return (
         <>
             <div className="h-dvh flex flex-col bg-surface">
@@ -705,8 +722,8 @@ export default function Topic() {
                     setConfirm={() => setConfirm("Are you sure you want to regenerate this topic?")}
                 />
 
-                <main className="flex-1 flex flex-col overflow-y-auto">
-                    <div className={`flex-1 ${fitLesson ? "min-h-0" : ""} w-full max-w-2xl mx-auto px-6 py-6 flex flex-col items-center justify-center`}>
+                <main className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
+                    <div key={stepSlides} className={`${stepSlides ? "animate-step-in" : ""} flex-1 ${fitLesson ? "min-h-0" : ""} w-full max-w-2xl mx-auto px-6 py-6 flex flex-col items-center justify-center`}>
                         {unreadLesson && lessonData ? (
                             typeof lessonData.lesson === "string" ? (
                                 <div className="w-full text-[17px] sm:text-lg">

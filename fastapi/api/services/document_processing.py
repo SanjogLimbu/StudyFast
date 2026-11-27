@@ -32,8 +32,8 @@ TOPIC_TASK_PROMPT = (PROMPTS_PATH / "topic_task_PROMPT.txt").read_text(encoding=
 
 HELP_RESPONSE = (PROMPTS_PATH / "help_response.txt").read_text(encoding="utf-8")
 
-# Matches [[native script|romanization]].
-ANNOTATION = re.compile(r"\[\[([^|\]]+)\|([^\]]+)\]\]")
+# Matches [[native script|romanization]]. A three-part [[kanji|kana|romanization]] keeps only the kana.
+ANNOTATION = re.compile(r"\[\[(?:[^|\]]+\|)?([^|\]]+)\|([^|\]]+)\]\]")
 
 # Matches text inside straight or curly double quotation marks.
 QUOTED = re.compile(r'["“]([^"”]+)["”]')

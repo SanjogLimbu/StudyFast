@@ -392,6 +392,10 @@ target-language words using:
 Example:
 [[私|watashi]] [[は|wa]] [[学生|gakusei]] [[です|desu]]
 
+Each annotation has exactly two parts with one | between
+them. Never add a third part, such as a kana reading
+between the kanji and the romanization.
+
 Annotate every target-language word consistently, including
 particles and short grammatical words.
 

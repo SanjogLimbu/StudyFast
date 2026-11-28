@@ -42,6 +42,7 @@ def add_topic_content(topic, content):
                 question=question_data["question"],
                 options=question_data["options"],
                 answer=question_data["answer"],
+                solution=question_data["solution"],
                 difficulty=question_data["difficulty"]
             )
         )

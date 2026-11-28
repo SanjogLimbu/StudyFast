@@ -487,6 +487,7 @@ def get_lesson(
         "name": topic.name,
         "lesson": topic.lesson,
         "lesson_sections": topic.lesson_sections,
+        "has_flashcards": bool(topic.flashcards),
         "read": (
             topic_mastery is not None
             and topic_mastery.lesson_read

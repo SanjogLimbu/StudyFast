@@ -38,7 +38,9 @@ of ideas in each section.
 Base the entire lesson on the supplied material.
 
 Simplify and reorganize the material without introducing
-unsupported facts, methods, or examples.
+unsupported facts, methods, or examples. The exception is a
+worked example for a mathematical method, which the general
+instructions require even when the material has none.
 
 Preserve the material's definitions, notation,
 terminology, worked examples, and conventions.
@@ -64,8 +66,9 @@ annotations according to the general instructions.
 If the topic teaches a mathematical function or graph property,
 include an appropriate graph in the relevant section.
 
-After the lesson sections, generate 4 to 12 flashcards
-and 8 to 24 final multiple-choice questions.
+After the lesson sections, generate 0 to 12 flashcards
+and 8 to 24 final multiple-choice questions, balanced
+for this topic as the general instructions describe.
 
 Use the complete lesson to construct them.
 

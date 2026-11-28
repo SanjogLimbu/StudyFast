@@ -118,7 +118,7 @@ function CodeBlock({ node, children }: ComponentProps<"pre"> & ExtraProps) {
 
 //
 
-function LessonMarkdown({ content }: { content: string }) {
+export function LessonMarkdown({ content }: { content: string }) {
     return (
         <Markdown
             remarkPlugins={[

@@ -165,6 +165,7 @@ def topic_text_fields(content: dict) -> list[str]:
     for question in content["question_bank"]:
         texts.extend([
             question["question"],
+            question["solution"],
             question["answer"],
             *question["options"]
         ])

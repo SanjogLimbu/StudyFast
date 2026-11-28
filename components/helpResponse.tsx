@@ -1,3 +1,7 @@
+import LabeledText from "@/components/labeledText"
+
+//
+
 type Props = {
     question: string
     answer: string
@@ -48,7 +52,7 @@ export default function HelpResponse({
                         </p>
 
                         <p className="text-[17px] sm:text-lg leading-relaxed wrap-break-word">
-                            {answer}
+                            <LabeledText text={answer} />
                         </p>
                     </div>
                 </div>

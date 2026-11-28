@@ -74,8 +74,9 @@ FLASHCARDS AND FINAL QUESTIONS
 After generating all lesson sections, generate the flashcards
 and the separate final question bank.
 
-Create 4 to 12 flashcards and 8 to 24 final multiple-choice
-questions, according to the topic's scope and the general rules.
+Create 0 to 12 flashcards and 8 to 24 final multiple-choice
+questions, according to the topic's scope and the general rules,
+balanced for this topic as the general instructions describe.
 
 Flashcards must test recall of facts, definitions, rules, methods,
 or vocabulary taught across the complete interactive lesson.

@@ -1,4 +1,5 @@
 import LabeledText from "@/components/labeledText"
+import { LessonMarkdown } from "@/components/lesson"
 
 //
 
@@ -14,6 +15,7 @@ export type QuestionData = {
 export type QuestionResponse = {
     correct: boolean,
     answer: string,
+    solution?: string | null,
     mastery: number,
     finished?: boolean
 }
@@ -66,6 +68,19 @@ export default function QuestionTask({
                     )
                 })}
             </div>
+
+            {/* A correct answer moves on by itself, so the solution is only shown after a wrong one. */}
+            {questionResponse && !questionResponse.correct && questionResponse.solution && (
+                <div className="mt-6 rounded-lg border-l-2 border-danger bg-background px-4 py-3 flex flex-col gap-2 text-[17px] sm:text-lg">
+                    <p className="font-semibold text-danger">
+                        Solution
+                    </p>
+
+                    <div className="lesson">
+                        <LessonMarkdown content={questionResponse.solution} />
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

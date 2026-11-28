@@ -142,7 +142,7 @@ TOPIC_SCHEMA = {
                 ],
                 "additionalProperties": False
             },
-            "minItems": 4,
+            "minItems": 0,
             "maxItems": 12
         },
         "question_bank": {
@@ -161,6 +161,10 @@ TOPIC_SCHEMA = {
                             "type": "string"
                         }
                     },
+                    # Before the answer, so the model works the problem out before choosing an option.
+                    "solution": {
+                        "type": "string"
+                    },
                     "answer": {
                         "type": "string"
                     },
@@ -176,6 +180,7 @@ TOPIC_SCHEMA = {
                 "required": [
                     "question",
                     "options",
+                    "solution",
                     "answer",
                     "difficulty"
                 ],

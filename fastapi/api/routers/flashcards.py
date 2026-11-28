@@ -61,12 +61,6 @@ def get_flashcard(
         )
 
 
-    if (not topic.flashcards):
-        return {
-            "state": "complete"
-        }
-    
-
     topic_mastery = next(
         (
             record
@@ -89,7 +83,20 @@ def get_flashcard(
             detail="Topic is locked."
         )
 
-    
+
+    # A topic without flashcards has no flashcard stage, so its quiz opens straight away.
+    if (not topic.flashcards):
+        if (not topic_mastery.completed_flashcards):
+            topic_mastery.completed_flashcards = True
+
+            db.commit()
+
+
+        return {
+            "state": "complete"
+        }
+
+
     now = datetime.now(timezone.utc)
     new_card = None
     due_card = None

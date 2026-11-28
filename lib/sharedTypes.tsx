@@ -15,6 +15,7 @@ export type LessonData = {
     name: string
     lesson: string | null
     lesson_sections: LessonSection[] | null
+    has_flashcards: boolean
     sections_completed: number
     read: boolean
 }

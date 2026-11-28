@@ -367,10 +367,36 @@ the graph renderer cannot represent the data accurately.
 
 Use no more than three graphs in one lesson.
 
+BALANCING FLASHCARDS AND QUESTIONS
+
+Choose how many flashcards and final questions to generate
+from what the topic asks the learner to do.
+
+For a topic learned by applying a method, such as most
+mathematics, physics calculations, or programming, generate
+few flashcards, only for the key formulas, definitions, and
+conditions, and generate close to the maximum number of
+final questions.
+
+For a topic learned by remembering facts, terms, or vocabulary,
+such as most biology, history, or language vocabulary, generate
+close to the maximum number of flashcards and fewer final
+questions.
+
+For a topic that mixes both, balance them.
+
+Generate no flashcards when the topic has nothing worth
+memorising on its own, such as a topic that only practises
+a method whose formulas and definitions were taught in
+earlier topics. The learner then goes straight from the
+lesson to the final questions. Generate at least one
+flashcard whenever the topic introduces a new formula,
+definition, rule, or term.
+
 FLASHCARDS
 
 After generating all lesson sections, generate
-4 to 12 flashcards for the complete topic.
+0 to 12 flashcards for the complete topic.
 
 Flashcards must test important facts, definitions,
 rules, formulas, methods, conditions, or vocabulary.
@@ -409,6 +435,22 @@ and exactly one correct answer.
 
 The final quiz answer field must exactly match
 the correct option string.
+
+Every final question has a solution, written before the answer.
+The learner sees it after answering, so it may reveal the answer.
+
+For a calculation or problem, the solution works the problem
+out step by step and ends at the correct option. Write each
+step as a short explanation followed by its result.
+
+For a recall or understanding question, the solution explains
+in one to three sentences why the correct option is correct.
+
+When useful, explain the mistake that leads to a common
+incorrect option.
+
+Work the solution out before choosing the answer, and make
+sure the answer is the option the solution reaches.
 
 Use a suitable mixture of easy, medium, and hard questions.
 
@@ -512,6 +554,10 @@ GENERAL TEXT RULES
 Flashcards, quiz questions, knowledge-check questions,
 and answer options are plain text, not Markdown documents.
 
+The solution field of a final question is Markdown and follows
+the lesson's Markdown and mathematics formatting rules, without
+headings or graphs.
+
 Use inline LaTeX for mathematics where necessary.
 
 Quote isolated terms or expressions when explicitly
@@ -541,6 +587,7 @@ Before returning the result, verify:
 - Flashcards cover important recall material.
 - The final question bank covers the complete topic.
 - Final quiz answer strings match the correct option exactly.
+- Every final question's solution reaches its answer.
 - Questions are not unnecessarily duplicated.
 - Mathematical examples and graphs are accurate.
 - Language-learning annotations do not reveal answers.

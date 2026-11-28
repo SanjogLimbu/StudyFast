@@ -530,6 +530,12 @@ class Question(Base):
         nullable=False
     )
 
+    # Questions generated before solutions were added have none.
+    solution: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True
+    )
+
     # Difficulties: easy, medium, hard
     difficulty: Mapped[str] = mapped_column(
         String(20),

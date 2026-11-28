@@ -33,6 +33,7 @@ function roundToPercentage(x: number) {
 }
 
 function StepBar({
+    steps,
     step,
     progress,
     documentId,
@@ -41,6 +42,7 @@ function StepBar({
     onNext,
     setConfirm
 }: {
+    steps: string[]
     step: number
     progress: number
     documentId: string
@@ -60,8 +62,8 @@ function StepBar({
                     ✕
                 </Link>
 
-                <ol className="flex-1 grid grid-cols-3 gap-2">
-                    {STEPS.map((name, i) => (
+                <ol className={`flex-1 grid ${steps.length == 2 ? "grid-cols-2" : "grid-cols-3"} gap-2`}>
+                    {steps.map((name, i) => (
                         <li key={name} aria-current={i == step ? "step" : undefined} className="flex flex-col gap-1.5 min-w-0">
                             <span className={`text-xs font-semibold truncate ${i == step ? "text-foreground" : "text-accent"}`}>
                                 {name}
@@ -674,6 +676,11 @@ export default function Topic() {
     // 0 is the lesson, 1 the flashcards, 2 the quiz and 3 a finished topic.
     const step = unreadLesson ? 0 : state == "questions" ? 2 : state == "complete" ? 3 : 1
 
+    // A topic without flashcards drops that step from the bar, so the quiz is shown as the second step.
+    const hasFlashcards = lessonData?.has_flashcards ?? true
+    const barSteps = hasFlashcards ? STEPS : STEPS.filter(name => name != "Flashcards")
+    const barStep = !hasFlashcards && step >= 2 ? step - 1 : step
+
     const progress = unreadLesson
     ? lessonSections?.length
         ? roundToPercentage(completedSections / lessonSections.length)
@@ -707,7 +714,8 @@ export default function Topic() {
         <>
             <div className="h-dvh flex flex-col bg-surface">
                 <StepBar
-                    step={step}
+                    steps={barSteps}
+                    step={barStep}
                     progress={progress}
                     documentId={documentId}
                     oldLesson={lessonData?.lesson}
